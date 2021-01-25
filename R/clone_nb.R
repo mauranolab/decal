@@ -30,3 +30,46 @@ col_div <- function(mtx, vec) {
   return(mtx)
 }
 
+#' Based on vst::get_model_pars function
+#' (see: https://github.com/ChristophH/sctransform/blob/master/R/vst.R)
+#'
+#' @importFrom fastglm fastglm
+#' @importFrom MASS theta.ml
+#' @noRd
+estimate_theta <- function(count, mu, depth, n=2e3, genes=NULL) {
+  theta <- numeric(nrow(count))
+  if(is.null(genes)) { genes <- which(mu > 0) }
+  log_mean <- log(mu)[genes]
+  ## Sample n genes to estimate
+  genes_step1 <- genes
+  log_mean_step1 <- log_mean
+  if (n < length(genes_step1)) {
+    log_mean_dens <- density(x=log_mean_step1, bw="nrd", adjust=1)
+    sampling_prob <- 1 / (
+      approx(log_mean_dens$x, log_mean_dens$y, xout=log_mean_step1)$y +
+        .Machine$double.eps
+      )
+    genes_step1 <- sample(genes_step1, size=n, prob = sampling_prob)
+    log_mean_step1 <- log(mu)[genes_step1]
+  }
+  ## Estimate theta
+  Y <- as.matrix(count[genes_step1, ])
+  theta_step1 <- suppressWarnings(sapply(seq_along(genes_step1), FUN = function(i) {
+    y <- Y[i,]
+    fit <- fastglm(cbind(1, depth), y, family=poisson(), method=2)
+    as.numeric(theta.ml(y, fit$fitted.values))
+  }))
+  theta_step1 <- pmax(theta_step1, 1e-7)
+  ## TODO: add find and remove outliers
+  ## Regularize and predict
+  odfac_step1 <- log10(1 + 10**log_mean_step1 / theta_step1)
+  bw <- bw.SJ(log_mean_step1) * 3
+  x_points <- pmin(pmax(log_mean, min(log_mean_step1)), max(log_mean_step1))
+  o_points <- order(x_points)
+  odfac <- numeric(length(log_mean))
+  odfac[o_points] <- ksmooth(x=log_mean_step1, y=odfac_step1,
+    x.points=x_points, bandwidth=bw, kernel="normal")$y
+  theta[genes] <- 10 ** x_points / (10 ** odfac - 1)
+  return(theta)
+}
+
