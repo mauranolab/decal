@@ -112,3 +112,86 @@ fit_nb <- function(Y, X, theta, depth, is, js) {
   result
 }
 
+#' @noRd
+is_matrix <- function(x) is.matrix(x) || is(x, "sparseMatrix")
+
+#' Perturbed clone differential expression
+#'
+#' It takes scRNA-seq UMI count matrix, clone assignment matrix and compares
+#' the expression of a given gene within and outside a given clone.
+#'
+#' The UMI counts are modeled by a Negative Binomial regression
+#' (\eqn{Y_ij ~ NB(\mu_ij, \theta_i)}), where \eqn{\theta_i} is the gene \eqn{i}
+#' dispersion and \eqn{\mu_ij} is gene \eqn{i} and cell \eqn{j} expected UMI
+#' count estimated as follow:
+#' \deqn{log(\mu_ij) = \beta_0 + \beta_1 \times log(dp_j) + \beta_2 x_ij}
+#' where \eqn{dp_j} is cell \eqn{j} total UMI depth and \eqn{x_ij} is a
+#' \emph{i.i.d.} measure if cell \eqn{j} belonged to a clone perturbing gene
+#' \eqn{i} expression.
+#'
+#' @param perturbed A data.frame like structure describing clone and gene pairs
+#'   to model expression and measure perturbation.
+#' @param count A `j` x `z` logical matrix or sparseMatrix indicating if the
+#'   \emph{jth} cell belongs or not to \emph{zth} clone.
+#' @param clone A `i` x `j` count matrix or sparseMatrix indicating if the UMI
+#'   expression of \emph{ith} gene for the  \emph{jth} cell.
+#' @return A object of the same type as `pertubed` added the following columns:
+#'
+#' @importFrom DelayedMatrixStats colSums2 rowMeans2 rowSums2
+#' @export
+clone_nb <- function(pertubed, count, clone, ...,
+  min_x = 1, min_n = 2, min_theta_mu = 0.05, n_theta = 2000,
+  gene_col = "gene", clone_col = "clone"
+) {
+  ## Validate perturbed
+  if (!is.data.frame(pertubed)) {
+    stop("`pertubed` must be a data.frame like structure (e.g. tibble)")
+  }
+  if (!gene_col %in% names(pertubed)) {
+    stop("`pertubed` must contain `", gene_col, "` column. For non-default column name, define it with `gene_col`")
+  }
+  if (!clone_col %in% names(pertubed)) {
+    stop("`pertubed` must contain `", clone_col, "` column. For non-default column name, define it with `clone_col`")
+  }
+  ## Validate clone and count
+  if (!is_matrix(count) || !is.matrix(clone)) {
+    stop("`count` and `clone` must be a matrix or sparseMatrix")
+  }
+  if (any(clone > 1)) {
+    stop("`clone` must be a logical matrix or encoded as 0/1")
+  }
+  ## Extract indexes
+  is <- as_index(pertubed[[gene_col]], rownames(count))
+  js <- as_index(pertubed[[clone_col]], colnames(clone))
+  ij <- cbind(is, js)
+  # Pre-compute some metrics
+  N <- colSums2(clone)
+  D <- colSums2(count)
+  Mu <- rowMeans2(count)
+  Nz <- rowSums2(count > 0)
+  XP <- count %*% clone
+  X1 <- col_div(XP, N)
+  X0 <- col_div(rowSums2(count) - XP, ncol(count) - N)
+  Th <- estimate_theta(count, Mu, log(D), n = n_theta, genes = which(Mu >= min_theta_mu))
+
+  pertubed[["n"]] <- N[js]
+  pertubed[["nonzero"]] <- Nz[is]
+  pertubed[["x1"]] <- X1[ij]
+  pertubed[["x0"]] <- X0[ij]
+  pertubed[["mu"]] <- Mu[is]
+  pertubed[["theta"]] <- Th[is]
+
+  to_test <- (
+    (pertubed[["x1"]] >= min_x | pertubed[["x0"]] >= min_x) &
+    pertubed[["n"]] >= min_n &
+    pertubed[["mu"]] >= min_theta_mu
+  )
+  if (sum(to_test) == 0) {
+    warning("No gene+clone passed the filter criteria, thus none were evaluated")
+    return(pertubed)
+  }
+  fit <- fit_nb(count, clone, Th, log(D), is[to_test], js[to_test])
+  pertubed[, names(fit)] <- NA
+  pertubed[to_test, names(fit)] <- fit
+  pertubed
+}
