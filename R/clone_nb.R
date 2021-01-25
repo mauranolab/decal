@@ -14,3 +14,19 @@ as_index <- function(x, ref = NULL) {
     NULL
   }
 }
+
+#' @noRd
+col_div <- function(mtx, vec) {
+  if (length(vec) != ncol(mtx)) {
+    stop("Incompatible dimensions at `col_div`. `vec` must have the same length as `mtx` columns.")
+  }
+  if (inherits(x = mtx, what = 'dgCMatrix')) {
+    mtx@x <- mtx@x / vec[rep(seq_len(mtx@Dim[2]), diff(mtx@p))]
+  } else if (inherits(x = mtx, what = 'dgTMatrix')) {
+    mtx@x <- mtx@x / vec[mtx@j + 1]
+  } else {
+    mtx <- t(t(mtx) / vec)
+  }
+  return(mtx)
+}
+
