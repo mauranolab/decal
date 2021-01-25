@@ -73,3 +73,42 @@ estimate_theta <- function(count, mu, depth, n=2e3, genes=NULL) {
   return(theta)
 }
 
+#' @importFrom fastglm fastglm
+#' @importFrom MASS negative.binomial
+#' @importFrom qvalue qvalue
+#'
+#' @noRd
+fit_nb <- function(Y, X, theta, depth, is, js) {
+  LN2 <- log(2) ## CTE
+  if (length(theta) == 1) theta <- rep(theta, nrow(Y))
+  ## Reindex to save memory
+  ix <- sort(unique(is))
+  jx <- sort(unique(js))
+  X <- as.matrix(X[, jx, drop = FALSE])
+  Y <- as.matrix(Y[ix, , drop = FALSE])
+  mean_depth <- log(mean(exp(depth)))
+
+  result <- as.data.frame(t(
+    mapply(match(is, ix), match(js, jx), FUN=function(i, j) {
+      fit <- fastglm(cbind(1, depth, X[,j]), Y[i,],
+        family=negative.binomial(theta = theta[i]), method=2)
+      coef <- summary(fit)$coef[3,]
+      names(coef) <- NULL
+      c(
+        xb = predict(fit, cbind(1, mean_depth, 1), type="response"),
+        beta = coef[1], stderr = coef[2], z = coef[3], lfc = coef[1]/LN2,
+        pvalue = coef[4]
+      )
+    })
+  ))
+  ## TODO: consider move to BF as default and use `p.adjust`
+  result$qvalue <- if (nrow(result) == 1) {
+    result$pvalue
+  } else if (nrow(result) < 1e3) {
+    qvalue(result$pvalue, pi0=1)$qvalues
+  } else {
+    qvalue(result$pvalue)$qvalues
+  }
+  result
+}
+
