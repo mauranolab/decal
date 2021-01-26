@@ -121,16 +121,18 @@ is_matrix <- function(x) is.matrix(x) || is(x, "sparseMatrix")
 validate_column <- function(x, name, ref) {
   if (!is_integer(x) && !is.character(x)) {
     stop("`", name,"` must be either a column name or index")
-  }
-  if (!is_integer(x) && ! x %in% ref) {
-    stop("`", x, "` is not a column name. Set `", name, "` to use a different column")
+  } else if (is_integer(x) && (x > length(ref) || x <= 0)) {
+    stop("`", name, "` is out of bounds")
+  } else if (!is_integer(x) && ! x %in% ref) {
+    stop("`", x, "` is not a column name. Set `",
+      name, "` to use a different column")
   }
 }
 
 #' @noRd
 validate_numeric <- function(x, name) {
-  if (!is.numeric(x)) {
-    stop("`", name, "` must be a numeric value")
+  if (!is.numeric(x) || length(x) != 1) {
+    stop("`", name, "` must be a scalar numeric value")
   }
 }
 
@@ -184,6 +186,9 @@ clone_nb <- function(pertubed, count, clone, ...,
   }
   if (any(clone > 1)) {
     stop("`clone` must be a logical matrix or encoded as 0/1")
+  }
+  if (ncol(count) != nrow(clone)) {
+    stop("`ncol(count) != nrow(clone)`: have incompatible dimensions")
   }
   ## Validate filters
   validate_numeric(min_x, "min_x")
