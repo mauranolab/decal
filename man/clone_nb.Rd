@@ -11,21 +11,37 @@ clone_nb(
   ...,
   min_x = 1,
   min_n = 2,
-  min_theta_mu = 0.05,
-  n_theta = 2000,
+  theta_min_mu = 0.05,
+  theta_n = 2000,
   gene_col = "gene",
   clone_col = "clone"
 )
 }
 \arguments{
+\item{pertubed}{A data.frame like structure describing clone and gene pairs
+to model expression and measure perturbation.}
+
 \item{count}{A \code{j} x \code{z} logical matrix or sparseMatrix indicating if the
 \emph{jth} cell belongs or not to \emph{zth} clone.}
 
 \item{clone}{A \code{i} x \code{j} count matrix or sparseMatrix indicating if the UMI
 expression of \emph{ith} gene for the  \emph{jth} cell.}
 
-\item{perturbed}{A data.frame like structure describing clone and gene pairs
-to model expression and measure perturbation.}
+\item{...}{Currently ignored}
+
+\item{min_x}{Minimal average expression within or outside the pertubed clone
+(\code{x1} and \code{x0}, respectively) required to test effect.}
+
+\item{min_n}{Minimal number of cells required to test a clone.}
+
+\item{theta_min_mu}{Minimal \code{mu} (overall average expression) required to
+estimated gene \code{theta} and to be tested.}
+
+\item{theta_n}{Number of genes sampled to estimate \code{theta}.}
+
+\item{gene_col}{Name or index of \code{gene} column in \code{pertubed}.}
+
+\item{clone_col}{Name or index of \code{clone} column in \code{pertubed}.}
 }
 \value{
 A object of the same type as \code{pertubed} added the following columns:
