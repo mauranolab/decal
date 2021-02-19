@@ -38,7 +38,7 @@ sim_expression <- function(cell_dp, gene_ps, log2_fc = 0L, theta = 100L) {
 
 #' @importFrom DelayedMatrixStats colSums2 rowSums2
 #' @export
-sim_from_data <- function(Y, log2_fc = 0L, theta = 100L) {
+sim_expression_from_data <- function(Y, log2_fc = 0L, theta = 100L) {
   if (!is_matrix(Y)) {
     stop("`Y` must be a matrix or sparseMatrix")
   }
