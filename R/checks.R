@@ -66,6 +66,15 @@ validate_integer_vector <- function(x) {
 }
 
 #' @noRd
+validate_positive_integer_vector <- function(x) {
+  do.call(validate_integer_vector, list(enquote(x)))
+  if (any(x <= 0)) {
+    name <- deparse(substitute(x))
+    stop("`", name, "` must be a positive integer vector", call. = FALSE)
+  }
+}
+
+#' @noRd
 validate_integer_scalar <- function(x) {
   do.call(validate_integer_vector, list(enquote(x)))
   if (length(x) != 1) {

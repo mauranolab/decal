@@ -52,7 +52,8 @@ test_that("validate_numeric*()", {
 
 test_that("validate_integer()", {
   unsupported <- list("a", TRUE, list(1), c(1.2, 1.3), matrix(1L, nrow = 2, ncol = 2))
-  int_vector <- 1:5
+  pos_vector <- 1:5
+  neg_vector <- 0:-5
   pos_scalar <- 1L
   neg_scalar <- -1L
   zero_scalar <- 0
@@ -60,12 +61,19 @@ test_that("validate_integer()", {
   test_type_requirement(
     unsupported, "must be a integer", validate_integer_vector
   )
-  expect_silent(validate_integer_vector(int_vector))
+  expect_silent(validate_integer_vector(pos_vector))
+  expect_silent(validate_integer_vector(neg_vector))
   expect_silent(validate_integer_vector(pos_scalar))
   expect_silent(validate_integer_vector(neg_scalar))
   expect_silent(validate_integer_vector(zero_scalar))
 
-  expect_error(validate_integer_scalar(int_vector), "must be a integer scalar")
+  expect_error(
+    validate_positive_integer_vector(neg_vector),
+    "must be a positive integer vector"
+  )
+  expect_silent(validate_positive_integer_vector(pos_vector))
+
+  expect_error(validate_integer_scalar(pos_vector), "must be a integer scalar")
   expect_silent(validate_integer_scalar(pos_scalar))
   expect_silent(validate_integer_scalar(neg_scalar))
   expect_silent(validate_integer_scalar(zero_scalar))
