@@ -27,7 +27,8 @@ sim_expression <- function(cell_dp, gene_ps, log2_fc = 0L, theta = 100L) {
   sim_nb <- theta / (theta + sim_mu)
   return(matrix(
     rnbinom(length(sim_mu), size = theta, prob = sim_nb),
-    nrow = length(gene_ps), ncol = length(cell_dp)
+    nrow = length(gene_ps), ncol = length(cell_dp),
+    dimnames = list(names(gene_ps), names(cell_dp))
   ))
 }
 

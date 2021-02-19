@@ -3,12 +3,13 @@ ngene <- 200L
 dp <- sample(c(10436, 52619, 32060, 18266, 8254), ncell, replace = TRUE)
 ps <- seq(0.01, 0.05, length.out = ngene)
 
-
 check_sim <- function(sim) {
   sim_ps <- rowSums(sim) / sum(dp)
   expect_equal(is.matrix(sim), TRUE)
   expect_equal(ncol(sim), length(dp))
   expect_equal(nrow(sim), length(ps))
+  expect_equal(rownames(sim), names(ps))
+  expect_equal(colnames(sim), names(dp))
   expect_equal(mean((sim_ps - ps)**2), 0, tolerance = 1e-4)
 }
 
@@ -54,6 +55,14 @@ test_that("sim_expression() parameters dimension requirements", {
     sim_expression(dp, ps, log2_fc = matrix(0, nrow = ngene - 5, ncol = ncell)),
     "Incompatible dimensions"
   )
+})
+
+test_that("sim_expression() includes gene and cell names", {
+  names(dp) <- sprintf("cell%03d", seq_along(dp))
+  names(ps) <- sprintf("gene%03d", seq_along(ps))
+  sim_mtx <- sim_expression(dp, ps)
+  expect_equal(colnames(sim_mtx), names(dp))
+  expect_equal(rownames(sim_mtx), names(ps))
 })
 
 test_that("sim_expression() produce desired log2 fold-change", {
