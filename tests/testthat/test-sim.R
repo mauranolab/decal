@@ -16,15 +16,15 @@ check_sim <- function(sim) {
 test_that("sim_expression() parameters type requirements", {
   unsupported_types <- list("a", FALSE, list(1), matrix(1, nrow = 2))
 
-  test_type_requirement(unsupported_types, "must be a numeric vector",
+  test_type_requirement(unsupported_types, "must be a numeric",
     sim_expression,
     gene_ps = ps, log2_fc = 0L
   )
-  test_type_requirement(unsupported_types, "must be a numeric vector",
+  test_type_requirement(unsupported_types, "must be a numeric",
     sim_expression,
     cell_dp = dp, log2_fc = 0L
   )
-  test_type_requirement(unsupported_types, "must be a numeric vector",
+  test_type_requirement(unsupported_types, "must be a numeric",
     sim_expression,
     cell_dp = dp, gene_ps = ps, log2_fc = 0L
   )

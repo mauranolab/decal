@@ -1,28 +1,25 @@
-numeric_unsupported_types <- list("a", FALSE, c(1, 2), list(1), matrix(1, nrow = 2))
+unsupported <- list("a", FALSE, list(1), c(1, 2), list(1), matrix(1, nrow = 2))
 
 test_that("seq_log() require numeric scalar `from` and `to`", {
-  test_type_requirement(numeric_unsupported_types, "must be a numeric scalar",
-    seq_log,
-    to = 10, length_out = 10L
+  test_type_requirement(unsupported, "must be a numeric",
+    seq_log, to = 10, length_out = 10L
   )
-  test_type_requirement(numeric_unsupported_types, "must be a numeric scalar",
-    seq_log,
-    from = 1, length_out = 10L
+  test_type_requirement(unsupported, "must be a numeric",
+    seq_log, from = 1, length_out = 10L
   )
 })
 
 test_that("seq_log() require integer scalar `length_out`", {
-  test_type_requirement(c(-1, 0, 10.5, numeric_unsupported_types),
-    "must be a positive integer scalar",
-    seq_log,
-    from = 1, to = 10
+  test_type_requirement(c(unsupported, 10.5), "must be a integer scalar",
+    seq_log, from = 1, to = 10
   )
+  expect_error(seq_log(1, 10, -1), "must be a positive integer scalar")
+  expect_error(seq_log(1, 10,  0), "must be a positive integer scalar")
 })
 
 test_that("seq_log() require numeric scalar `base`", {
-  test_type_requirement(numeric_unsupported_types, "must be a numeric scalar",
-    seq_log,
-    from = 1, to = 10, length_out = 10L
+  test_type_requirement(unsupported, "must be a numeric",
+    seq_log, from = 1, to = 10, length_out = 10L
   )
 })
 

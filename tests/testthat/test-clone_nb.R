@@ -35,36 +35,36 @@ test_that("clone_nb input validation", {
 
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, min_x = logical()),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, min_n = logical()),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, theta_min_mu = logical()),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, theta_n = logical()),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
 
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, min_x = integer(2L)),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, min_n = integer(2L)),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, theta_min_mu = integer(2L)),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
   expect_error(
     clone_nb(data.frame(gene = is, clone = js), Y, X, theta_n = integer(2L)),
-    "must be a scalar numeric value"
+    "must be a numeric"
   )
 })
 
