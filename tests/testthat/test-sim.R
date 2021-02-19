@@ -112,3 +112,17 @@ test_that("sim_expression_from_data() replicates similar data from base", {
   expect_equal(dim(sim_mtx), dim(scSimulated))
   expect_equal(rowMeans(sim_mtx), rowMeans2(scSimulated), tolerance = 0.1)
 })
+
+test_that("sim_expression_from_data() simulates n_genes as range", {
+  sim_mtx <- sim_expression_from_data(scSimulated, n_genes = 100L)
+  expect_equal(ncol(sim_mtx), ncol(scSimulated))
+  expect_equal(nrow(sim_mtx), 100L)
+
+  exp_lmean <- log10(rowMeans2(scSimulated))
+  sim_lmean <- log10(rowMeans(sim_mtx))
+  expect_equal(min(10**sim_lmean), min(10**exp_lmean), tolerance = 0.05)
+  expect_equal(max(10**sim_lmean), max(10**exp_lmean), tolerance = 0.05)
+  exp_step <- diff(range(exp_lmean)) / 100L
+  sim_step <- mean(diff(sim_lmean))
+  expect_equal(sim_step, exp_step, tolerance = 0.05)
+})

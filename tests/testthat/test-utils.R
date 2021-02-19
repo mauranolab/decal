@@ -12,7 +12,7 @@ test_that("seq_log() require numeric scalar `from` and `to`", {
 })
 
 test_that("seq_log() require integer scalar `length_out`", {
-  test_type_requirement(c(unsupported, 10.5), "must be a integer scalar",
+  test_type_requirement(c(unsupported, 10.5), "must be a integer",
     seq_log,
     from = 1, to = 10
   )

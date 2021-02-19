@@ -58,8 +58,17 @@ validate_numeric_scalar <- function(x) {
 }
 
 #' @noRd
+validate_integer_vector <- function(x) {
+  if (!(is.numeric(x) && x == round(x)) || is_matrix(x)) {
+    name <- deparse(substitute(x))
+    stop("`", name, "` must be a integer", call. = FALSE)
+  }
+}
+
+#' @noRd
 validate_integer_scalar <- function(x) {
-  if (length(x) != 1 || !(is.numeric(x) && x == round(x))) {
+  do.call(validate_integer_vector, list(enquote(x)))
+  if (length(x) != 1) {
     name <- deparse(substitute(x))
     stop("`", name, "` must be a integer scalar", call. = FALSE)
   }
