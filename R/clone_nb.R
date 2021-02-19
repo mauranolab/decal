@@ -113,10 +113,6 @@ fit_nb <- function(Y, X, theta, depth, is, js) {
   result
 }
 
-#' @importFrom methods is
-#' @noRd
-is_matrix <- function(x) is.matrix(x) || is(x, "sparseMatrix")
-
 #' @noRd
 validate_column <- function(x, name, ref) {
   if (!is_integer(x) && !is.character(x)) {
@@ -126,13 +122,6 @@ validate_column <- function(x, name, ref) {
   } else if (!is_integer(x) && ! x %in% ref) {
     stop("`", x, "` is not a column name. Set `",
       name, "` to use a different column")
-  }
-}
-
-#' @noRd
-validate_numeric <- function(x, name) {
-  if (!is.numeric(x) || length(x) != 1) {
-    stop("`", name, "` must be a scalar numeric value")
   }
 }
 
@@ -191,10 +180,10 @@ clone_nb <- function(pertubed, count, clone, ...,
     stop("`ncol(count) != nrow(clone)`: have incompatible dimensions")
   }
   ## Validate filters
-  validate_numeric(min_x, "min_x")
-  validate_numeric(min_n, "min_n")
-  validate_numeric(theta_min_mu, "theta_min_mu")
-  validate_numeric(theta_n, "theta_n")
+  validate_numeric_scalar(min_x)
+  validate_numeric_scalar(min_n)
+  validate_numeric_scalar(theta_min_mu)
+  validate_numeric_scalar(theta_n)
   ## Extract indexes
   is <- as_index(pertubed[[gene_col]], rownames(count))
   js <- as_index(pertubed[[clone_col]], colnames(clone))
