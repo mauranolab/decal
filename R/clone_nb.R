@@ -20,9 +20,9 @@ col_div <- function(mtx, vec) {
   if (length(vec) != ncol(mtx)) {
     stop("Incompatible dimensions at `col_div`. `vec` must have the same length as `mtx` columns.")
   }
-  if (inherits(x = mtx, what = 'dgCMatrix')) {
+  if (inherits(x = mtx, what = "dgCMatrix")) {
     mtx@x <- mtx@x / vec[rep(seq_len(mtx@Dim[2]), diff(mtx@p))]
-  } else if (inherits(x = mtx, what = 'dgTMatrix')) {
+  } else if (inherits(x = mtx, what = "dgTMatrix")) {
     mtx@x <- mtx@x / vec[mtx@j + 1]
   } else {
     mtx <- t(t(mtx) / vec)
@@ -37,27 +37,29 @@ col_div <- function(mtx, vec) {
 #' @importFrom MASS theta.ml
 #' @importFrom stats approx bw.SJ density ksmooth poisson predict
 #' @noRd
-estimate_theta <- function(count, mu, depth, n=2e3, genes=NULL) {
+estimate_theta <- function(count, mu, depth, n = 2e3, genes = NULL) {
   theta <- numeric(nrow(count))
-  if(is.null(genes)) { genes <- which(mu > 0) }
+  if (is.null(genes)) {
+    genes <- which(mu > 0)
+  }
   log_mean <- log(mu)[genes]
   ## Sample n genes to estimate
   genes_step1 <- genes
   log_mean_step1 <- log_mean
   if (n < length(genes_step1)) {
-    log_mean_dens <- density(x=log_mean_step1, bw="nrd", adjust=1)
+    log_mean_dens <- density(x = log_mean_step1, bw = "nrd", adjust = 1)
     sampling_prob <- 1 / (
-      approx(log_mean_dens$x, log_mean_dens$y, xout=log_mean_step1)$y +
+      approx(log_mean_dens$x, log_mean_dens$y, xout = log_mean_step1)$y +
         .Machine$double.eps
-      )
-    genes_step1 <- sample(genes_step1, size=n, prob = sampling_prob)
+    )
+    genes_step1 <- sample(genes_step1, size = n, prob = sampling_prob)
     log_mean_step1 <- log(mu)[genes_step1]
   }
   ## Estimate theta
   Y <- as.matrix(count[genes_step1, ])
   theta_step1 <- suppressWarnings(sapply(seq_along(genes_step1), FUN = function(i) {
-    y <- Y[i,]
-    fit <- fastglm(cbind(1, depth), y, family=poisson(), method=2)
+    y <- Y[i, ]
+    fit <- fastglm(cbind(1, depth), y, family = poisson(), method = 2)
     as.numeric(theta.ml(y, fit$fitted.values))
   }))
   theta_step1 <- pmax(theta_step1, 1e-7)
@@ -68,9 +70,11 @@ estimate_theta <- function(count, mu, depth, n=2e3, genes=NULL) {
   x_points <- pmin(pmax(log_mean, min(log_mean_step1)), max(log_mean_step1))
   o_points <- order(x_points)
   odfac <- numeric(length(log_mean))
-  odfac[o_points] <- ksmooth(x=log_mean_step1, y=odfac_step1,
-    x.points=x_points, bandwidth=bw, kernel="normal")$y
-  theta[genes] <- 10 ** x_points / (10 ** odfac - 1)
+  odfac[o_points] <- ksmooth(
+    x = log_mean_step1, y = odfac_step1,
+    x.points = x_points, bandwidth = bw, kernel = "normal"
+  )$y
+  theta[genes] <- 10**x_points / (10**odfac - 1)
   return(theta)
 }
 
@@ -90,14 +94,15 @@ fit_nb <- function(Y, X, theta, depth, is, js) {
   mean_depth <- log(mean(exp(depth)))
 
   result <- as.data.frame(t(
-    mapply(match(is, ix), match(js, jx), FUN=function(i, j) {
-      fit <- fastglm(cbind(1, depth, X[,j]), Y[i,],
-        family=negative.binomial(theta = theta[i]), method=2)
-      coef <- summary(fit)$coef[3,]
+    mapply(match(is, ix), match(js, jx), FUN = function(i, j) {
+      fit <- fastglm(cbind(1, depth, X[, j]), Y[i, ],
+        family = negative.binomial(theta = theta[i]), method = 2
+      )
+      coef <- summary(fit)$coef[3, ]
       names(coef) <- NULL
       c(
-        xb = predict(fit, cbind(1, mean_depth, 1), type="response"),
-        beta = coef[1], stderr = coef[2], z = coef[3], lfc = coef[1]/LN2,
+        xb = predict(fit, cbind(1, mean_depth, 1), type = "response"),
+        beta = coef[1], stderr = coef[2], z = coef[3], lfc = coef[1] / LN2,
         pvalue = coef[4]
       )
     })
@@ -106,7 +111,7 @@ fit_nb <- function(Y, X, theta, depth, is, js) {
   result$qvalue <- if (nrow(result) == 1) {
     result$pvalue
   } else if (nrow(result) < 1e3) {
-    qvalue(result$pvalue, pi0=1)$qvalues
+    qvalue(result$pvalue, pi0 = 1)$qvalues
   } else {
     qvalue(result$pvalue)$qvalues
   }
@@ -116,12 +121,14 @@ fit_nb <- function(Y, X, theta, depth, is, js) {
 #' @noRd
 validate_column <- function(x, name, ref) {
   if (!is_integer(x) && !is.character(x)) {
-    stop("`", name,"` must be either a column name or index")
+    stop("`", name, "` must be either a column name or index")
   } else if (is_integer(x) && (x > length(ref) || x <= 0)) {
     stop("`", name, "` is out of bounds")
-  } else if (!is_integer(x) && ! x %in% ref) {
-    stop("`", x, "` is not a column name. Set `",
-      name, "` to use a different column")
+  } else if (!is_integer(x) && !x %in% ref) {
+    stop(
+      "`", x, "` is not a column name. Set `",
+      name, "` to use a different column"
+    )
   }
 }
 
@@ -160,9 +167,8 @@ validate_column <- function(x, name, ref) {
 #' @importFrom DelayedMatrixStats colSums2 rowMeans2 rowSums2
 #' @export
 clone_nb <- function(pertubed, count, clone, ...,
-  min_x = 1, min_n = 2, theta_min_mu = 0.05, theta_n = 2000,
-  gene_col = "gene", clone_col = "clone"
-) {
+                     min_x = 1, min_n = 2, theta_min_mu = 0.05, theta_n = 2000,
+                     gene_col = "gene", clone_col = "clone") {
   ## Validate perturbed
   if (!is.data.frame(pertubed)) {
     stop("`pertubed` must be a data.frame like structure (e.g. tibble)")
@@ -197,7 +203,9 @@ clone_nb <- function(pertubed, count, clone, ...,
   X1 <- col_div(XP, N)
   X0 <- col_div(rowSums2(count) - XP, ncol(count) - N)
   Th <- estimate_theta(
-    count, Mu, log(D), n = floor(theta_n), genes = which(Mu >= theta_min_mu))
+    count, Mu, log(D),
+    n = floor(theta_n), genes = which(Mu >= theta_min_mu)
+  )
 
   pertubed[["n"]] <- as.integer(N[js])
   pertubed[["nonzero"]] <- as.integer(Nz[is])
@@ -208,8 +216,8 @@ clone_nb <- function(pertubed, count, clone, ...,
 
   to_test <- (
     (pertubed[["x1"]] >= min_x | pertubed[["x0"]] >= min_x) &
-    pertubed[["n"]] >= min_n &
-    pertubed[["mu"]] >= theta_min_mu
+      pertubed[["n"]] >= min_n &
+      pertubed[["mu"]] >= theta_min_mu
   )
   if (sum(to_test) == 0) {
     warning("No gene+clone passed the filter criteria, thus none were evaluated")

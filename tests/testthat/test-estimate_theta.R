@@ -7,7 +7,7 @@ with_seed <- function(seed, code) {
 }
 
 test_that("estimate_theta is consistent with seed", {
-  Y <- matrix(rpois(1e5, 100), ncol=1000)
+  Y <- matrix(rpois(1e5, 100), ncol = 1000)
   g <- which(rowMeans(Y) > 1)
   th1 <- with_seed(42, {
     estimate_theta(Y, rowMeans(Y), log(colSums(Y)), genes = g)

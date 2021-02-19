@@ -14,15 +14,19 @@ sim_expression <- function(cell_dp, gene_ps, log2_fc = 0L, theta = 100L) {
       stop(
         "Incompatible dimensions. When `log2_fc` is a matrix, it must have ",
         "the same number of rows as `len(gene_ps)` and columns as ",
-        "`len(cell_dp)`", call. = FALSE)
+        "`len(cell_dp)`",
+        call. = FALSE
+      )
     }
-    sim_mu <- (gene_ps %o% cell_dp) * (2 ** log2_fc)
+    sim_mu <- (gene_ps %o% cell_dp) * (2**log2_fc)
   } else if (length(log2_fc) == length(cell_dp) || length(log2_fc) == 1L) {
-    sim_mu <- t((cell_dp %o% gene_ps) * (2 ** log2_fc))
+    sim_mu <- t((cell_dp %o% gene_ps) * (2**log2_fc))
   } else {
     stop(
       "Incompatible dimensions. `log2_fc` must be a scalar or vector of ",
-      "the same length as `cell_dp`", call. = FALSE)
+      "the same length as `cell_dp`",
+      call. = FALSE
+    )
   }
   sim_nb <- theta / (theta + sim_mu)
   return(matrix(
@@ -35,7 +39,9 @@ sim_expression <- function(cell_dp, gene_ps, log2_fc = 0L, theta = 100L) {
 #' @importFrom DelayedMatrixStats colSums2 rowSums2
 #' @export
 sim_from_data <- function(Y, log2_fc = 0L, theta = 100L) {
-  if (!is_matrix(Y)) { stop("`Y` must be a matrix or sparseMatrix") }
+  if (!is_matrix(Y)) {
+    stop("`Y` must be a matrix or sparseMatrix")
+  }
   dp <- colSums2(Y)
   ps <- rowSums2(Y) / sum(dp)
   sim_expression(dp, ps, log2_fc, theta = theta)
@@ -45,7 +51,9 @@ sim_from_data <- function(Y, log2_fc = 0L, theta = 100L) {
 #' @export
 sim_from_data_as_exp_range <-
   function(Y, log2_fc = 0L, theta = 100L, n_genes = 100L) {
-    if (!is_matrix(Y)) { stop("`Y` must be a matrix or sparseMatrix") }
+    if (!is_matrix(Y)) {
+      stop("`Y` must be a matrix or sparseMatrix")
+    }
     dp <- colSums2(Y)
     ps <- rowSums2(Y) / sum(dp)
     sim_ps <- seq_log(min(ps), max(ps), length_out = n_genes)
@@ -55,7 +63,9 @@ sim_from_data_as_exp_range <-
 #' @export
 sim_lfc_matrix <- function(log2_fc, clone_size, ncell, rep_each = 1L) {
   ## validation
-  if (!is.numeric(log2_fc)) { stop("`log2_fc` must be a numeric value") }
+  if (!is.numeric(log2_fc)) {
+    stop("`log2_fc` must be a numeric value")
+  }
   if (!is.integer(clone_size) && any(clone_size > max(ncell))) {
     stop("`clone_size` must be a integer value below or equal to ncell")
   }
@@ -80,6 +90,6 @@ sim_lfc_matrix <- function(log2_fc, clone_size, ncell, rep_each = 1L) {
   }
   do.call(rbind, lapply(seq_along(log2_fc), function(i) {
     vec <- sample(rep(c(0, log2_fc[i]), c(n - clone_size[i], clone_size[i])))
-    t(matrix(vec , length(vec) , rep_each[i]))
+    t(matrix(vec, length(vec), rep_each[i]))
   }))
 }

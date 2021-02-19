@@ -17,6 +17,7 @@ seq_log <- function(from, to, length_out, base = 10L) {
   log_seq <- seq(
     from = log(from, base = base),
     to = log(to, base = base),
-    length.out = length_out)
+    length.out = length_out
+  )
   return(base**log_seq)
 }

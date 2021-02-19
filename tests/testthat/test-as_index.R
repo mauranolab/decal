@@ -17,4 +17,3 @@ test_that("as_index throw an error when x is not integer and ref is a different 
   expect_error(as_index(as_index(numeric(1L), LETTERS)), "`x` must either be an integer or match `ref` type")
   expect_error(as_index(as_index(character(1L), 1:10)), "`x` must either be an integer or match `ref` type")
 })
-
