@@ -17,7 +17,8 @@ validate_adjacency_matrix <- function(x) {
   if (!is.logical(x) && any(x != 1L & x != 0L)) {
     name <- deparse(substitute(x))
     stop("`", name, "` must be a logical matrix or encoded as 0/1",
-      call. = FALSE)
+      call. = FALSE
+    )
   }
 }
 

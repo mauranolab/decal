@@ -92,22 +92,23 @@ test_that("sim_expression() produce desired log2 fold-change", {
   }
 })
 
-test_that("sim_from_data() requires matrix or sparseMatrix", {
+test_that("sim_expression_from_data() requires matrix or sparseMatrix", {
   unsupported_types <- list(1, "a", FALSE, list(1), c(1, 2, 3))
 
   test_type_requirement(
-    unsupported_types, "must be a matrix or sparseMatrix", sim_from_data
+    unsupported_types, "must be a matrix or sparseMatrix",
+    sim_expression_from_data
   )
 })
 
-test_that("sim_from_data() replicates similar data from base", {
+test_that("sim_expression_from_data() replicates similar data from base", {
   data("scSimulated")
-  sim_mtx <- sim_from_data(scSimulated)
+  sim_mtx <- sim_expression_from_data(scSimulated)
   expect_equal(dim(sim_mtx), dim(scSimulated))
   expect_equal(rowMeans(sim_mtx), rowMeans2(scSimulated), tolerance = 0.1)
   ## Small lfc change
   lfc_vec <- rep(c(0, 1), c(ncol(scSimulated) - 10, 10))
-  sim_mtx <- sim_from_data(scSimulated, lfc_vec)
+  sim_mtx <- sim_expression_from_data(scSimulated, lfc_vec)
   expect_equal(dim(sim_mtx), dim(scSimulated))
   expect_equal(rowMeans(sim_mtx), rowMeans2(scSimulated), tolerance = 0.1)
 })
