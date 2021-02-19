@@ -170,15 +170,12 @@ clone_nb <- function(pertubed, count, clone, ...,
                      min_x = 1, min_n = 2, theta_min_mu = 0.05, theta_n = 2000,
                      gene_col = "gene", clone_col = "clone") {
   ## Validate perturbed
-  if (!is.data.frame(pertubed)) {
-    stop("`pertubed` must be a data.frame like structure (e.g. tibble)")
-  }
+  validate_dataframe(pertubed)
   validate_column(gene_col, "gene_col", colnames(pertubed))
   validate_column(clone_col, "clone_col", colnames(pertubed))
   ## Validate clone and count
-  if (!is_matrix(count) || !is.matrix(clone)) {
-    stop("`count` and `clone` must be a matrix or sparseMatrix")
-  }
+  validate_matrix(count)
+  validate_matrix(clone)
   if (any(clone > 1)) {
     stop("`clone` must be a logical matrix or encoded as 0/1")
   }
