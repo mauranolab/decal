@@ -3,13 +3,13 @@
 #' It simulates an experiment based on our model assumptions
 #'
 #' @export
-sim_expression <- function(cell_dp, gene_ps, log2_fc = 0L, theta = 100L) {
+sim_count <- function(cell_dp, gene_ps, log2_fc = 0L, theta = 100L) {
   validate_numeric_vector(cell_dp)
   validate_numeric_vector(gene_ps)
   validate_numeric(log2_fc)
   validate_numeric_vector(theta)
 
-  if (is.matrix(log2_fc)) {
+  if (is_matrix(log2_fc)) {
     if (nrow(log2_fc) != length(gene_ps) || ncol(log2_fc) != length(cell_dp)) {
       stop(
         "Incompatible dimensions. When `log2_fc` is a matrix, it must have ",
@@ -38,58 +38,83 @@ sim_expression <- function(cell_dp, gene_ps, log2_fc = 0L, theta = 100L) {
 
 #' @importFrom DelayedMatrixStats colSums2 rowSums2
 #' @export
-sim_expression_from_data <- function(Y, log2_fc = 0L, theta = 100L) {
-  if (!is_matrix(Y)) {
-    stop("`Y` must be a matrix or sparseMatrix")
+sim_count_from_data <-
+  function(data, log2_fc = 0L, theta = 100L, n_genes = NULL) {
+    validate_matrix(data)
+    dp <- colSums2(data)
+    ps <- rowSums2(data) / sum(dp)
+    if (!is.null(n_genes)) {
+      ps <- seq_log(min(ps), max(ps), length_out = n_genes)
+    }
+    sim_count(dp, ps, log2_fc, theta = theta)
   }
-  dp <- colSums2(Y)
-  ps <- rowSums2(Y) / sum(dp)
-  sim_expression(dp, ps, log2_fc, theta = theta)
+
+#' @export
+sim_clone <- function(perturbed, cells, rep_each = NULL) {
+  validate_positive_integer_vector(perturbed)
+  validate_positive_integer_scalar(cells)
+  if (!is.null(rep_each)) {
+    validate_positive_integer_scalar(rep_each)
+    perturbed <- rep(perturbed, rep_each)
+  }
+  if (any(perturbed > cells)) {
+    stop("All `perturbed` values must smaller than `cells`")
+  }
+  sapply(seq_along(perturbed), function(i) {
+    vec <- rep(0:1, c(cells - perturbed[i], perturbed[i]))
+    sample(vec)
+  })
 }
 
-#' @importFrom DelayedMatrixStats colSums2 rowSums2
-#' @export
-sim_from_data_as_exp_range <-
-  function(Y, log2_fc = 0L, theta = 100L, n_genes = 100L) {
-    if (!is_matrix(Y)) {
-      stop("`Y` must be a matrix or sparseMatrix")
-    }
-    dp <- colSums2(Y)
-    ps <- rowSums2(Y) / sum(dp)
-    sim_ps <- seq_log(min(ps), max(ps), length_out = n_genes)
-    sim_effect(dp, sim_ps, log2_fc, theta = theta)
-  }
+#' #' @export
+#' sim_pairs <- function(per_clone, genes, clones) {
+#'   validate_positive_integer_scalar(per_clone)
+#'   validate_positive_integer_scalar(genes)
+#'   validate_positive_integer_scalar(clones)
+#'   gene_pool <- seq_len(genes)
+#'   data.frame(
+#'     gene = replicate(length(clones), sample(gene_pool, per_clone))
+#'     clone = rep(seq_len(clones), per_clone)
+#'   )
+#' }
 
 #' @export
-sim_lfc_matrix <- function(log2_fc, clone_size, ncell, rep_each = 1L) {
-  ## validation
-  if (!is.numeric(log2_fc)) {
-    stop("`log2_fc` must be a numeric value")
-  }
-  if (!is.integer(clone_size) && any(clone_size > max(ncell))) {
-    stop("`clone_size` must be a integer value below or equal to ncell")
-  }
-  if (!is.integer(ncell) && length(ncell) != 1L && ncell <= 0) {
-    stop("`ncell` must be a integer scalar bigger than 0")
-  }
-  if (!is.integer(rep_each) && all(rep_each <= 0)) {
-    stop("`rep_each` must be positive integer bigger than 0")
-  }
-  if (length(log2_fc) != length(clone_size) && length(clone_size) != 1L) {
-    stop("Incompatible sizes, `log2_fc` and `clone_size` must have the same length")
-  }
-  if (length(log2_fc) != length(rep_each) && length(rep_each) != 1L) {
-    stop("Incompatible sizes, `log2_fc` and `rep_each` must have the same length")
-  }
-  ## fix values for compatibility
-  if (length(clone_size) == 1L) {
-    clone_size <- rep(clone_size, length(log2_fc))
-  }
-  if (length(rep_each) == 1L) {
-    rep_each <- rep(rep_each, length(log2_fc))
-  }
+make_lfc <- function(clone, log2_fc = 1) {
+  validate_adjacency_matrix(clone)
+  validate_numeric_vector(log2_fc)
+  ## validate dimensions
   do.call(rbind, lapply(seq_along(log2_fc), function(i) {
-    vec <- sample(rep(c(0, log2_fc[i]), c(n - clone_size[i], clone_size[i])))
-    t(matrix(vec, length(vec), rep_each[i]))
+    t(clone * log2_fc[i])
   }))
 }
+
+# sim_lfc <- function(log2_fc, clone_size, ncell, rep_each = 1L) {
+#   validate_numeric_vector(log2_fc)
+#   validate_positive_integer_vector(clone_size)
+#   validate_positive_integer_scalar(ncell)
+#   validate_positive_integer_vector(rep_each)
+#   if (any(clone_size > ncell)) stop("All `clone_size` values must smaller than `ncell`")
+#   ## validate dimensions
+#   len_lfc <- length(log2_fc)
+#   if (length(clone_size) != 1L && length(clone_size) != len_lfc) {
+#     stop(
+#       "Incompatible dimensions. `clone_size` must be either a scalar ",
+#       "or the same length as `log2_fc`"
+#     )
+#   }
+#   if (length(rep_each) != 1L && length(rep_each) != len_lfc) {
+#     stop(
+#       "Incompatible dimensions. `rep_each` must be either a scalar ",
+#       "or the same length as `log2_fc`"
+#     )
+#   }
+#   ## Fix values for compatibility
+#   if (length(clone_size) == 1L) clone_size <- rep(clone_size, len_lfc)
+#   if (length(rep_each) == 1L) rep_each <- rep(rep_each, len_lfc)
+#
+#   do.call(rbind, lapply(seq_len(len_lfc), function(i) {
+#     vec <- rep(c(0, log2_fc[i]), c(n - clone_size[i], clone_size[i]))
+#     vec <- sample(vec) ## shuffle perturbed cells
+#     t(matrix(vec, length(vec), rep_each[i]))
+#   }))
+# }
