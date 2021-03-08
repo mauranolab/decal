@@ -39,9 +39,7 @@ col_div <- function(mtx, vec) {
 #' @noRd
 estimate_theta <- function(count, mu, depth, n = 2e3, genes = NULL) {
   theta <- numeric(nrow(count))
-  if (is.null(genes)) {
-    genes <- which(mu > 0)
-  }
+  if (is.null(genes)) genes <- which(mu > 0)
   log_mean <- log(mu)[genes]
   ## Sample n genes to estimate
   genes_step1 <- genes
@@ -83,29 +81,31 @@ estimate_theta <- function(count, mu, depth, n = 2e3, genes = NULL) {
 #' @importFrom qvalue qvalue
 #'
 #' @noRd
-fit_nb <- function(Y, X, theta, depth, is, js) {
-  LN2 <- log(2) ## CTE
+fit_nb <- function(Y, X, theta, log_depth, is, js) {
   if (length(theta) == 1) theta <- rep(theta, nrow(Y))
-  ## Reindex to save memory
+  ## Scale correction constant
+  LN2 <- log(2)
+  ## Subset and covert to dense matrix
   ix <- sort(unique(is))
   jx <- sort(unique(js))
   X <- as.matrix(X[, jx, drop = FALSE])
   Y <- as.matrix(Y[ix, , drop = FALSE])
-  mean_depth <- log(mean(exp(depth)))
+  mean_depth <- log(mean(exp(log_depth)))
 
   result <- as.data.frame(t(
-    mapply(match(is, ix), match(js, jx), FUN = function(i, j) {
-      fit <- fastglm(cbind(1, depth, X[, j]), Y[i, ],
-        family = negative.binomial(theta = theta[i]), method = 2
+    mapply(function(i, j) {
+      fit <- fastglm(
+        cbind(1, log_depth, X[, j]), Y[i, ],
+        family = negative.binomial(theta = theta[i]),
+        method = 2
       )
       coef <- summary(fit)$coef[3, ]
       names(coef) <- NULL
       c(
         xb = predict(fit, cbind(1, mean_depth, 1), type = "response"),
-        beta = coef[1], stderr = coef[2], z = coef[3], lfc = coef[1] / LN2,
-        pvalue = coef[4]
+        z = coef[3], lfc = coef[1] / LN2, pvalue = coef[4]
       )
-    })
+    }, match(is, ix), match(js, jx))
   ))
   ## TODO: consider move to BF as default and use `p.adjust`
   result$qvalue <- if (nrow(result) == 1) {
@@ -132,47 +132,57 @@ validate_column <- function(x, name, ref) {
   }
 }
 
-#' Perturbed clone differential expression
+#' Perturbed clone and gene differential expression
 #'
-#' It takes scRNA-seq UMI count matrix, clone assignment matrix and compares
-#' the expression of a given gene within and outside a given clone.
+#' Given a table of clone and gene interactions pairs, UMI count matrix and
+#' clone adjacency matrix, it models each interaction gene expression (`Y`)
+#' with a negative binomial regression in function of cell total count (`D`)
+#' and a clone indicator variable (`X`) as indicated by the model below:
 #'
-#' The UMI counts are modeled by a Negative Binomial regression
-#' (\eqn{Y_ij ~ NB(\mu_ij, \theta_i)}), where \eqn{\theta_i} is the gene \eqn{i}
-#' dispersion and \eqn{\mu_ij} is gene \eqn{i} and cell \eqn{j} expected UMI
-#' count estimated as follow:
-#' \deqn{log(\mu_ij) = \beta_0 + \beta_1 \times log(dp_j) + \beta_2 x_ij}
-#' where \eqn{dp_j} is cell \eqn{j} total UMI depth and \eqn{x_ij} is a
-#' \emph{i.i.d.} measure if cell \eqn{j} belonged to a clone perturbing gene
-#' \eqn{i} expression.
+#' \deqn{Y ~ NB(xb, theta)}
+#' \deqn{log(xb) = \beta_0 + \beta_d * log(D) + \beta_x * X}
+#' \deqn{theta ~ \mu}
 #'
-#' @param pertubed A data.frame like structure describing clone and gene pairs
-#'   to model expression and measure perturbation.
-#' @param count A `j` x `z` logical matrix or sparseMatrix indicating if the
-#'   \emph{jth} cell belongs or not to \emph{zth} clone.
-#' @param clone A `i` x `j` count matrix or sparseMatrix indicating if the UMI
-#'   expression of \emph{ith} gene for the  \emph{jth} cell.
-#' @param min_x Minimal average expression within or outside the pertubed clone
-#'   (`x1` and `x0`, respectively) required to test effect.
-#' @param min_n Minimal number of cells required to test a clone.
-#' @param theta_min_mu Minimal `mu` (overall average expression) required to
-#'   estimated gene `theta` and to be tested.
-#' @param theta_n Number of genes sampled to estimate `theta`.
-#' @param gene_col Name or index of `gene` column in `pertubed`.
-#' @param clone_col Name or index of `clone` column in `pertubed`.
-#' @param ... Currently ignored
+#' Each gene overdispersion (`theta`) is estimated in two steps. First, it fits
+#' a Poisson regression as function of log total cell count and uses maximum
+#' likelihood estimator to estimate the raw `theta` for a subset of genes.
+#' Next it regularize and expands `theta` estimates as function of overall
+#' average count.
 #'
-#' @return A object of the same type as `pertubed` added the following columns:
+#' @param interactions table with clone and gene indexes pairs to measure
+#' differential gene expression.
+#' @param count count matrix with cells as columns and features as rows.
+#' @param clone logical or adjacency matrix indicating the perturbed cells
+#' (rows) belonging to each clone (columns).
+#' @param min_x minimal average expression of perturbed and non-perturbed cells
+#' required.
+#' @param min_n minimal number of perturbed cells required.
+#' @param theta_min_mu minimal overall average expression required to estimate
+#' gene `theta` and run test.
+#' @param theta_n number of genes sampled to preliminary `theta` estimation.
+#' @param gene_col name or index of feature column in `interactions`
+#' @param clone_col name or index of clone column in `interactions`
+#' @param ... currently ignored
+#' @return object of the type as `interactions` with the following columns added:
+#'  - `n0` and `n1`: number of non-perturbed and perturbed cells
+#'  - `x0` and `x1`: number of non-perturbed and perturbed cells average count
+#'  - `mu`: overall average expression
+#'  - `theta`: negative binomial overdispersion
+#'  - `xb`: perturbed cells' estimated average count
+#'  - `z`: perturbed cells' standardize z-score effect
+#'  - `lfc`: perturbed cells' log2 fold-change effect
+#'  - `pvalue`
+#'  - `qvalue`
 #'
 #' @importFrom DelayedMatrixStats colSums2 rowMeans2 rowSums2
 #' @export
-clone_nb <- function(pertubed, count, clone, ...,
+clone_nb <- function(interactions, count, clone, ...,
                      min_x = 1, min_n = 2, theta_min_mu = 0.05, theta_n = 2000,
                      gene_col = "gene", clone_col = "clone") {
   ## Validate perturbed
-  validate_dataframe(pertubed)
-  validate_column(gene_col, "gene_col", colnames(pertubed))
-  validate_column(clone_col, "clone_col", colnames(pertubed))
+  validate_dataframe(interactions)
+  validate_column(gene_col, "gene_col", colnames(interactions))
+  validate_column(clone_col, "clone_col", colnames(interactions))
   ## Validate clone and count
   validate_matrix(count)
   validate_matrix(clone)
@@ -184,44 +194,48 @@ clone_nb <- function(pertubed, count, clone, ...,
   }
   ## Validate filters
   validate_numeric_scalar(min_x)
-  validate_numeric_scalar(min_n)
+  validate_positive_integer_scalar(min_n)
   validate_numeric_scalar(theta_min_mu)
-  validate_numeric_scalar(theta_n)
-  ## Extract indexes
-  is <- as_index(pertubed[[gene_col]], rownames(count))
-  js <- as_index(pertubed[[clone_col]], colnames(clone))
-  ij <- cbind(is, js)
+  validate_positive_integer_scalar(theta_n)
+  if (theta_n < 10L) {
+    stop("`theta_n` should be larger than 10", .call = FALSE)
+  }
   # Pre-compute some metrics
   N <- colSums2(clone)
-  D <- colSums2(count)
+  D <- log(colSums2(count))
   Mu <- rowMeans2(count)
   Nz <- rowSums2(count > 0)
   XP <- count %*% clone
   X1 <- col_div(XP, N)
   X0 <- col_div(rowSums2(count) - XP, ncol(count) - N)
   Th <- estimate_theta(
-    count, Mu, log(D),
-    n = floor(theta_n), genes = which(Mu >= theta_min_mu)
+    count, Mu, D,
+    n = theta_n,
+    genes = which(Mu >= theta_min_mu)
   )
+  ## Extract indexes
+  is <- as_index(interactions[[gene_col]], rownames(count))
+  js <- as_index(interactions[[clone_col]], colnames(clone))
+  ij <- cbind(is, js)
+  ## Add statistics
+  interactions[["n0"]] <- as.integer(ncol(count) - N[js])
+  interactions[["n1"]] <- as.integer(N[js])
+  interactions[["x1"]] <- X1[ij]
+  interactions[["x0"]] <- X0[ij]
+  interactions[["mu"]] <- Mu[is]
+  interactions[["theta"]] <- Th[is]
+  interactions[, c("xb", "z", "lfc", "pvalue", "qvalue")] <- NA_real_
 
-  pertubed[["n"]] <- as.integer(N[js])
-  pertubed[["nonzero"]] <- as.integer(Nz[is])
-  pertubed[["x1"]] <- X1[ij]
-  pertubed[["x0"]] <- X0[ij]
-  pertubed[["mu"]] <- Mu[is]
-  pertubed[["theta"]] <- Th[is]
-
-  to_test <- (
-    (pertubed[["x1"]] >= min_x | pertubed[["x0"]] >= min_x) &
-      pertubed[["n"]] >= min_n &
-      pertubed[["mu"]] >= theta_min_mu
+  which_to_test <- which(
+    (interactions[["x1"]] >= min_x | interactions[["x0"]] >= min_x) &
+      interactions[["n1"]] >= min_n &
+      interactions[["mu"]] >= theta_min_mu
   )
-  if (sum(to_test) == 0) {
+  if (length(which_to_test) == 0) {
     warning("No gene+clone passed the filter criteria, thus none were evaluated")
-    return(pertubed)
+    return(interactions)
   }
-  fit <- fit_nb(count, clone, Th, log(D), is[to_test], js[to_test])
-  pertubed[, names(fit)] <- NA_real_
-  pertubed[to_test, names(fit)] <- fit
-  pertubed
+  fit <- fit_nb(count, clone, Th, D, is[which_to_test], js[which_to_test])
+  interactions[which_to_test, names(fit)] <- fit
+  interactions
 }

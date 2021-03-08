@@ -2,10 +2,10 @@
 % Please edit documentation in R/clone_nb.R
 \name{clone_nb}
 \alias{clone_nb}
-\title{Perturbed clone differential expression}
+\title{Perturbed clone and gene differential expression}
 \usage{
 clone_nb(
-  pertubed,
+  interactions,
   count,
   clone,
   ...,
@@ -18,45 +18,58 @@ clone_nb(
 )
 }
 \arguments{
-\item{pertubed}{A data.frame like structure describing clone and gene pairs
-to model expression and measure perturbation.}
+\item{interactions}{table with clone and gene indexes pairs to measure
+differential gene expression.}
 
-\item{count}{A \code{j} x \code{z} logical matrix or sparseMatrix indicating if the
-\emph{jth} cell belongs or not to \emph{zth} clone.}
+\item{count}{count matrix with cells as columns and features as rows.}
 
-\item{clone}{A \code{i} x \code{j} count matrix or sparseMatrix indicating if the UMI
-expression of \emph{ith} gene for the  \emph{jth} cell.}
+\item{clone}{logical or adjacency matrix indicating the perturbed cells
+(rows) belonging to each clone (columns).}
 
-\item{...}{Currently ignored}
+\item{...}{currently ignored}
 
-\item{min_x}{Minimal average expression within or outside the pertubed clone
-(\code{x1} and \code{x0}, respectively) required to test effect.}
+\item{min_x}{minimal average expression of perturbed and non-perturbed cells
+required.}
 
-\item{min_n}{Minimal number of cells required to test a clone.}
+\item{min_n}{minimal number of perturbed cells required.}
 
-\item{theta_min_mu}{Minimal \code{mu} (overall average expression) required to
-estimated gene \code{theta} and to be tested.}
+\item{theta_min_mu}{minimal overall average expression required to estimate
+gene \code{theta} and run test.}
 
-\item{theta_n}{Number of genes sampled to estimate \code{theta}.}
+\item{theta_n}{number of genes sampled to preliminary \code{theta} estimation.}
 
-\item{gene_col}{Name or index of \code{gene} column in \code{pertubed}.}
+\item{gene_col}{name or index of feature column in \code{interactions}}
 
-\item{clone_col}{Name or index of \code{clone} column in \code{pertubed}.}
+\item{clone_col}{name or index of clone column in \code{interactions}}
 }
 \value{
-A object of the same type as \code{pertubed} added the following columns:
+object of the type as \code{interactions} with the following columns added:
+\itemize{
+\item \code{n0} and \code{n1}: number of non-perturbed and perturbed cells
+\item \code{x0} and \code{x1}: number of non-perturbed and perturbed cells average count
+\item \code{mu}: overall average expression
+\item \code{theta}: negative binomial overdispersion
+\item \code{xb}: perturbed cells' estimated average count
+\item \code{z}: perturbed cells' standardize z-score effect
+\item \code{lfc}: perturbed cells' log2 fold-change effect
+\item \code{pvalue}
+\item \code{qvalue}
+}
 }
 \description{
-It takes scRNA-seq UMI count matrix, clone assignment matrix and compares
-the expression of a given gene within and outside a given clone.
+Given a table of clone and gene interactions pairs, UMI count matrix and
+clone adjacency matrix, it models each interaction gene expression (\code{Y})
+with a negative binomial regression in function of cell total count (\code{D})
+and a clone indicator variable (\code{X}) as indicated by the model below:
 }
 \details{
-The UMI counts are modeled by a Negative Binomial regression
-(\eqn{Y_ij ~ NB(\mu_ij, \theta_i)}), where \eqn{\theta_i} is the gene \eqn{i}
-dispersion and \eqn{\mu_ij} is gene \eqn{i} and cell \eqn{j} expected UMI
-count estimated as follow:
-\deqn{log(\mu_ij) = \beta_0 + \beta_1 \times log(dp_j) + \beta_2 x_ij}
-where \eqn{dp_j} is cell \eqn{j} total UMI depth and \eqn{x_ij} is a
-\emph{i.i.d.} measure if cell \eqn{j} belonged to a clone perturbing gene
-\eqn{i} expression.
+\deqn{Y ~ NB(xb, theta)}
+\deqn{log(xb) = \beta_0 + \beta_d * log(D) + \beta_x * X}
+\deqn{theta ~ \mu}
+
+Each gene overdispersion (\code{theta}) is estimated in two steps. First, it fits
+a Poisson regression as function of log total cell count and uses maximum
+likelihood estimator to estimate the raw \code{theta} for a subset of genes.
+Next it regularize and expands \code{theta} estimates as function of overall
+average count.
 }

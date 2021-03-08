@@ -1,6 +1,6 @@
 #' @importFrom methods is
 #' @noRd
-is_matrix <- function(x) is.matrix(x) || is(x, "sparseMatrix")
+is_matrix <- function(x) (!is.character(x) && is.matrix(x)) || is(x, "sparseMatrix")
 
 #' @noRd
 validate_matrix <- function(x) {
@@ -59,7 +59,7 @@ validate_numeric_scalar <- function(x) {
 
 #' @noRd
 validate_integer_vector <- function(x) {
-  if (!(is.numeric(x) && x == round(x)) || is_matrix(x)) {
+  if (!(is.numeric(x) && all(x == round(x))) || is_matrix(x)) {
     name <- deparse(substitute(x))
     stop("`", name, "` must be a integer", call. = FALSE)
   }
@@ -89,5 +89,12 @@ validate_positive_integer_scalar <- function(x) {
   if (x <= 0) {
     name <- deparse(substitute(x))
     stop("`", name, "` must be a positive integer scalar", call. = FALSE)
+  }
+}
+
+validate_index <- function(x) {
+  if (is_matrix(x) || (!(is.numeric(x) && all(x == round(x))) && !is.character(x))) {
+    name <- deparse(substitute(x))
+    stop("`", name, "` must be a integer or character vector")
   }
 }

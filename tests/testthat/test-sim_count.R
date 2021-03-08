@@ -18,19 +18,19 @@ test_that("sim_count() parameters type requirements", {
 
   test_type_requirement(unsupported_types, "must be a numeric",
     sim_count,
-    gene_ps = ps, log2_fc = 0L
+    gene_rate = ps, log2_fc = 0L
   )
   test_type_requirement(unsupported_types, "must be a numeric",
     sim_count,
-    cell_dp = dp, log2_fc = 0L
+    cell_depth = dp, log2_fc = 0L
   )
   test_type_requirement(unsupported_types, "must be a numeric",
     sim_count,
-    cell_dp = dp, gene_ps = ps, log2_fc = 0L
+    cell_depth = dp, gene_rate = ps, log2_fc = 0L
   )
   test_type_requirement(unsupported_types[1:3], "must be a numeric",
     sim_count,
-    cell_dp = dp, gene_ps = ps
+    cell_depth = dp, gene_rate = ps
   )
 })
 
@@ -102,23 +102,23 @@ test_that("sim_count_from_data() requires matrix or sparseMatrix", {
 })
 
 test_that("sim_count_from_data() replicates similar data from base", {
-  data("scSimulated")
-  sim_mtx <- sim_count_from_data(scSimulated)
-  expect_equal(dim(sim_mtx), dim(scSimulated))
-  expect_equal(rowMeans(sim_mtx), rowMeans2(scSimulated), tolerance = 0.1)
+  data("sc_simulated")
+  sim_mtx <- sim_count_from_data(sc_simulated)
+  expect_equal(dim(sim_mtx), dim(sc_simulated))
+  expect_equal(rowMeans(sim_mtx), rowMeans2(sc_simulated), tolerance = 0.1)
   ## Small lfc change
-  lfc_vec <- rep(c(0, 1), c(ncol(scSimulated) - 10, 10))
-  sim_mtx <- sim_count_from_data(scSimulated, lfc_vec)
-  expect_equal(dim(sim_mtx), dim(scSimulated))
-  expect_equal(rowMeans(sim_mtx), rowMeans2(scSimulated), tolerance = 0.1)
+  lfc_vec <- rep(c(0, 1), c(ncol(sc_simulated) - 10, 10))
+  sim_mtx <- sim_count_from_data(sc_simulated, lfc_vec)
+  expect_equal(dim(sim_mtx), dim(sc_simulated))
+  expect_equal(rowMeans(sim_mtx), rowMeans2(sc_simulated), tolerance = 0.1)
 })
 
 test_that("sim_count_from_data() simulates n_genes as range", {
-  sim_mtx <- sim_count_from_data(scSimulated, n_genes = 100L)
-  expect_equal(ncol(sim_mtx), ncol(scSimulated))
+  sim_mtx <- sim_count_from_data(sc_simulated, n_genes = 100L)
+  expect_equal(ncol(sim_mtx), ncol(sc_simulated))
   expect_equal(nrow(sim_mtx), 100L)
 
-  exp_lmean <- log10(rowMeans2(scSimulated))
+  exp_lmean <- log10(rowMeans2(sc_simulated))
   sim_lmean <- log10(rowMeans(sim_mtx))
   expect_equal(min(10**sim_lmean), min(10**exp_lmean), tolerance = 0.05)
   expect_equal(max(10**sim_lmean), max(10**exp_lmean), tolerance = 0.05)
