@@ -1,3 +1,49 @@
+#' DECAL: Differential Expression analysis of Clonal Alterations Local effects
+#' based on Negative Binomial distribution
+#'
+#' This function performs the clonal alterations differential expression
+#' analysis pairs of clonal sub-populations and perturbed genes.
+#'
+#' Given a table of clone and gene pairs, a UMI count matrix, and list of cells
+#' per clone, this function models gene expression (`Y`) with a negative
+#' binomial (a.k.a. Gamma-Poisson) distribution for each perturbation pair as
+#' a function of `X` (clone indicator variable) offset by the cell total count
+#' (`D`) as described by the model:
+#'
+#' \deqn{Y ~ NB(xb, theta)}
+#' \deqn{log(xb) = \beta_0 + \beta_x * X + log(D)}
+#' \deqn{theta ~ \mu}
+#'
+#' The gene dispersion parameter (`theta`) is estimated and regularized in two
+#' steps as developed by Hafemeister & Satija (2019). First, for a subset of
+#' genes it fits a _Poisson_ regression offseted by `log(D)` and estimate a
+#' crude `theta` using a maximum likelihood estimator with the observed counts
+#' and regression results. Next, it regularize and expands `theta` estimates
+#' with a kernel smoothing function as a function of average count (`mu`).
+#'
+#' @param perturbations table with clone and gene perturbations pairs to model
+#' differential expression effect.
+#' @param count UMI count matrix with cells as columns and genes (or features)
+#' as rows.
+#' @param clone list of cells per clone.
+#' @param theta_sample number of genes sampled to preliminary `theta` estimation.
+#' @param min_mu minimal overall average expression (`mu`) required.
+#' @param min_n minimal number of perturbed cells (`n1`) required.
+#' @param min_x minimal average expression of perturbed (`x1`) and non-perturbed
+#' cells (`x0`) required.
+#' @param gene_col gene index column name in `perturbations`
+#' @param clone_col clone index column name in `perturbations`
+#' @param ... currently ignored parameters
+#' @return it extends `perturbations` table adding the following columns:
+#' - `n0` and `n1`: number of non-perturbed and perturbed cells
+#' - `x0` and `x1`: number of non-perturbed and perturbed cells average count
+#' - `mu`: overall average expression
+#' - `theta`: negative binomial dispersion parameter
+#' - `xb`: perturbed cells' estimated average count
+#' - `z`: perturbed cells' standardize z-score effect
+#' - `lfc`: perturbed cells' log2 fold-change effect
+#' - `pvalue`
+#' - `p_adjusted`
 #'
 #' @importFrom Matrix colSums rowMeans
 #' @export
@@ -54,7 +100,6 @@ decal <- function(
     fit <- fit_nb(count, clone, theta, log_depth,
                   rowidx[which_test], colidx[which_test])
     perturbations[which_test, names(fit)] <- fit
-    return(perturbations)
   }
   return(perturbations)
 }
@@ -107,9 +152,7 @@ validate_index <- function(x, unique=TRUE) {
 #' @noRd
 build_clone_matrix <- function(clone, cells) {
   ## Validate input
-  if (!is.list(clone)) {
-    stop("`clone` must be a list of cells", call. = FALSE)
-  }
+  if (!is.list(clone)) { stop("`clone` must be a list of cells", call. = FALSE) }
   validate_index(cells)
   ## Vectorize clone list
   clones <- name_or_index(clone)
@@ -198,7 +241,7 @@ fit_nb <- function(count, clone, theta, log_dp, rows, cols) {
   Y <- as.matrix(count[ix, , drop=FALSE])
   mean_depth <- mean(exp(log_dp))
   ## fit regression
-  result <- as.data.frame(t(mapply(function(i, j) {
+  result <- mapply(function(i, j) {
     f <- fastglm(cbind(1, X[,j]), Y[i,],
                  family=negative.binomial(theta = theta[i]),
                  method=2, offset = log_dp)
@@ -208,7 +251,8 @@ fit_nb <- function(count, clone, theta, log_dp, rows, cols) {
       xb = predict(f, cbind(1, 1), type="response") * mean_depth,
       z = coef[3], lfc = coef[1]/ln2, pvalue = coef[4]
     )
-  }, match(rows, ix), match(cols, jx))))
+  }, match(rows, ix), match(cols, jx))
+  result <- as.data.frame(t(result))
   ## Compute Benjamin-Hochenberg p-value adjustment
   result$p_adjusted <- p.adjust(result$pvalue, "BH")
   return(result)
