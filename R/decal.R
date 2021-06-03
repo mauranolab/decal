@@ -53,6 +53,8 @@ decal <- function(
   gene_col="gene", clone_col="clone"
 ) {
   ## Validate input
+  validate_dataframe(perturbations, c(gene_col, clone_col))
+  validate_matrix(count)
   ## Build clone identity matrix
   cellnames <- colnames(count)
   if (is.null(cellnames)) { cellnames <- seq_len(ncol(count)) }
@@ -146,6 +148,29 @@ validate_index <- function(x, unique=TRUE) {
   return()
 }
 
+#' @noRd
+validate_dataframe <- function(x, cols=c()) {
+  if (!is.data.frame(x)) {
+    name <- deparse(substitute(x))
+    stop("`", name, "` must be a data.frame like structure (e.g. tibble)",
+      call. = FALSE
+    )
+  }
+  if (all(cols %in% colnames(x))) {
+    name <- deparse(substitute(x))
+    stop("`", name, "` must contain all required columns", call. = FALSE)
+  }
+}
+
+is_matrix <- function(x) (!is.character(x) && is.matrix(x)) || is(x, "sparseMatrix")
+
+validate_matrix <- function(x) {
+  if (!is_matrix(x)) {
+    name <- deparse(substitute(x))
+    stop("`", name, "` must be a matrix or sparseMatrix", call. = FALSE)
+  }
+}
+
 #' Build a clone identity matrix from a list of cells
 #'
 #' @importFrom Matrix sparseMatrix
@@ -153,6 +178,10 @@ validate_index <- function(x, unique=TRUE) {
 build_clone_matrix <- function(clone, cells) {
   ## Validate input
   if (!is.list(clone)) { stop("`clone` must be a list of cells", call. = FALSE) }
+  if (any(!is_index(unlist(clone)))) {
+    stop("`clone` cells list must be integer or character indexes",
+         call. = FALSE)
+  }
   validate_index(cells)
   ## Vectorize clone list
   clones <- name_or_index(clone)
