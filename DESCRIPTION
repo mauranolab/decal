@@ -1,28 +1,29 @@
-Package: scCloneDE
-Title: Single-Cell Pertubed Clones Differential Expression
+Package: decal
+Title: Differential Expression Analysis of Clonal Alterations Local effects
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Andre", family = "Ribeiro-dos-Santos",
            role = c("aut", "cre"),
            email = "andremrsantos@gmail.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: It models a single-cell UMI expression as a negative binomial
-    distribution and estimates the effect of genetic pertubations to a
-    subpopulation (clone) to gene expression.
+           comment = c(ORCID = "https://orcid.org/0000-0002-7005-3576"))
+Description: It models gene UMI counts from a single-cell experiment as a
+    negative binomial regression to measure the effect of a localized genetic
+    alteration of a clonal cell subpopulation to near by genes expression.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
 Imports: 
     MASS,
     fastglm,
-    DelayedMatrixStats,
-    qvalue,
     methods,
     Matrix
 Depends: 
     R (>= 2.10)
+VignetteBuilder: knitr
