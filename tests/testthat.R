@@ -1,4 +1,4 @@
 library(testthat)
-library(scCloneDE)
+library(decal)
 
-test_check("scCloneDE")
+test_check("decal")
