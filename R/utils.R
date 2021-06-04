@@ -2,7 +2,10 @@
 coldiv <- function(mtx, vec) {
   ## Validate input size
   if (length(vec) != ncol(mtx)) {
-    stop("Incompatible dimensions. `vec` must have the same length as `mtx` columns", call. = FALSE)
+    stop(
+      "Incompatible dimensions. `vec` must be the same size as `mtx` columns",
+      call. = FALSE
+    )
   }
   if (inherits(x = mtx, what = "dgCMatrix")) {
     mtx@x <- mtx@x / vec[rep(seq_len(mtx@Dim[2]), diff(mtx@p))]
@@ -16,7 +19,10 @@ coldiv <- function(mtx, vec) {
 
 #' @noRd
 or <- function(x, default) {
-  if (is.null(x)) { default } else { x }
+  if (is.null(x)) {
+    return(default)
+  }
+  return(x)
 }
 
 #' @noRd
@@ -29,4 +35,3 @@ get_index <- function(x, ref = NULL) {
   }
   stop("`x` must be an integer index or match reference type")
 }
-
