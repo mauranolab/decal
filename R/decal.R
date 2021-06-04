@@ -53,10 +53,7 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   validate_dataframe(perturbations, c(gene_col, clone_col))
   validate_matrix(count)
   ## Build clone identity matrix
-  cellnames <- colnames(count)
-  if (is.null(cellnames)) {
-    cellnames <- seq_len(ncol(count))
-  }
+  cellnames <- or(colnames(count), seq_len(ncol(count)))
   clonemtx <- build_clone_matrix(clone, cellnames)
   ## Compute metrics
   n1 <- colSums(clonemtx)
@@ -77,8 +74,7 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   if (any(is.na(rowidx)) || any(is.na(colidx))) {
     warning(
       "Skipping ", sum(is.na(rowidx) | is.na(colidx)), " perturbations ",
-      "not matching gene or clone id",
-      call. = FALSE
+      "not matching gene or clone id"
     )
   }
   ## Update results
@@ -103,41 +99,6 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   return(perturbations)
 }
 
-coldiv <- function(mtx, vec) {
-  ## Validate input size
-  if (length(vec) != ncol(mtx)) {
-    stop("Incompatible dimensions. `vec` must have the same length as `mtx` columns", call. = FALSE)
-  }
-  if (inherits(x = mtx, what = "dgCMatrix")) {
-    mtx@x <- mtx@x / vec[rep(seq_len(mtx@Dim[2]), diff(mtx@p))]
-  } else if (inherits(x = mtx, what = "dgTMatrix")) {
-    mtx@x <- mtx@x / vec[mtx@j + 1]
-  } else {
-    mtx <- t(t(mtx) / vec)
-  }
-  return(mtx)
-}
-
-name_or_index <- function(x) {
-  name <- names(x)
-  if (is.null(name)) {
-    return(seq_along(x))
-  }
-  return(name)
-}
-
-get_index <- function(x, ref = NULL) {
-  if (!is.null(ref) && typeof(x) == typeof(ref)) {
-    return(match(x, ref))
-  }
-  if (is.integer(x) && all(x > 0L)) {
-    return(x)
-  }
-  stop("`x` must be an integer index or match reference type")
-}
-
-#' Build a clone identity matrix from a list of cells
-#'
 #' @importFrom Matrix sparseMatrix
 #' @noRd
 build_clone_matrix <- function(clone, cells) {
@@ -146,11 +107,12 @@ build_clone_matrix <- function(clone, cells) {
     stop("`clone` must be a list of cells", call. = FALSE)
   }
   if (any(!is_index(unlist(clone)))) {
-    stop("`clone` cells list must be integer or character indexes", call. = FALSE)
+    stop("`clone` cells list must be integer or character indexes",
+         call. = FALSE)
   }
   validate_index(cells)
   ## Vectorize clone list
-  clones <- name_or_index(clone)
+  clones <- or(names(clone), seq_along(clone))
   vec_cells <- unlist(clone)
   vec_clone <- rep(clones, sapply(clone, length))
   ## Build matrix
