@@ -46,7 +46,7 @@
 #' - `pvalue`
 #' - `p_adjusted`
 #'
-#' @importFrom Matrix colSums rowMeans
+#' @importFrom Matrix colSums rowSums rowMeans
 #' @export
 decal <- function(perturbations, count, clone, theta_sample = 2000,
                   min_mu = 0.05, min_n = 3, min_x = 1,
@@ -60,7 +60,7 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   ## Compute metrics
   n1 <- colSums(clonemtx)
   n0 <- ncol(count) - n1
-  xp <- count %*% clone
+  xp <- count %*% clonemtx
   x1 <- coldiv(xp, n1)
   x0 <- coldiv(rowSums(count) - xp, ncol(count) - n1)
   mu <- rowMeans(count)
@@ -81,8 +81,9 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   }
   ## Update results
   perturbations <- cbind(perturbations, data.frame(
-    n0 = ncol(count) - n1[colidx], n1 = n1[colidx], x1 = x1[mtxidx],
-    x0 = x0[mtxidx], mu = mu[rowidx], theta = mu[rowidx],
+    n0 = ncol(count) - n1[colidx], n1 = n1[colidx],
+    x0 = x0[mtxidx], x1 = x1[mtxidx], mu = mu[rowidx],
+    theta = mu[rowidx],
     xb = NA_real_, z = NA_real_, lfc = NA_real_,
     pvalue = NA_real_, p_adjusted = NA_real_
   ))
@@ -93,10 +94,10 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
       perturbations$mu >= min_mu
   )
   if (length(which_test) == 0) {
-    warning("No gene & clone perturbation matched the required criteria.")
+    warning("No gene & clone perturbation matched the requirements")
   } else {
     fit <- fit_nb(
-      count, clone, theta, log_depth,
+      count, clonemtx, theta, log_depth,
       rowidx[which_test], colidx[which_test],
       p_method
     )
@@ -124,7 +125,7 @@ build_clone_matrix <- function(clone, cells) {
   vec_clone <- rep(clones, sapply(clone, length))
   ## Build matrix
   mtx <- sparseMatrix(
-    i = match(vec_cells, cells), j = match(vec_cells, clones), x = 1L,
+    i = match(vec_cells, cells), j = match(vec_clone, clones), x = 1L,
     dims = c(length(cells), length(clones))
   )
   if (is.character(cells)) rownames(mtx) <- cells
@@ -140,7 +141,7 @@ estimate_theta_raw <- function(count, genes, log_dp, floor = 1E-7) {
   Y <- as.matrix(count[genes, ])
   theta <- sapply(seq_along(genes), FUN = function(i) {
     y <- Y[i, ]
-    x <- matrix(1L, nrow = length(y))
+    x <- matrix(1, nrow = length(y))
     f <- fastglm(x, y, family = poisson(), method = 2, offset = log_dp)
     suppressWarnings(as.numeric(theta.ml(y, f$fitted.values)))
   })
@@ -191,7 +192,7 @@ estimate_theta <- function(count, mu, log_dp, n, genes) {
 #' @importFrom stats p.adjust predict
 #' @noRd
 fit_nb <- function(count, clone, theta, log_dp, rows, cols, p_method) {
-  if (length(theta) == 1L) theta <- rep(theta, nrow(Y))
+  if (length(theta) == 1L) theta <- rep(theta, nrow(count))
   if (length(rows) != length(cols)) {
     stop("rows and cols index must have the same length", call. = FALSE)
   }
@@ -209,7 +210,7 @@ fit_nb <- function(count, clone, theta, log_dp, rows, cols, p_method) {
       family = negative.binomial(theta = theta[i]), method = 2,
       offset = log_dp
     )
-    coef <- summary(f)$coef[3, ]
+    coef <- summary(f)$coef[2, ]
     names(coef) <- NULL
     c(
       xb = predict(f, cbind(1, 1), type = "response") * mean_depth,
