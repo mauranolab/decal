@@ -1,3 +1,4 @@
+#' @importFrom Matrix t
 #' @noRd
 coldiv <- function(mtx, vec) {
   ## Validate input size
@@ -11,6 +12,8 @@ coldiv <- function(mtx, vec) {
     mtx@x <- mtx@x / vec[rep(seq_len(mtx@Dim[2]), diff(mtx@p))]
   } else if (inherits(x = mtx, what = "dgTMatrix")) {
     mtx@x <- mtx@x / vec[mtx@j + 1]
+  } else if (inherits(x = mtx, what = "Matrix")) {
+    mtx <- Matrix::t(Matrix::t(mtx) / vec)
   } else {
     mtx <- t(t(mtx) / vec)
   }
