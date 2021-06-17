@@ -30,6 +30,7 @@ validate_dataframe <- function(x, cols = c()) {
   }
 }
 
+#' @importFrom methods is
 #' @noRd
 is_matrix <- function(x) {
   (!is.character(x) && is.matrix(x)) || is(x, "sparseMatrix")
