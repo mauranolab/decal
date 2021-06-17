@@ -17,8 +17,7 @@ sim_clone <- function(size, ncells) {
   validate_positive_integer(size)
   validate_positive_integer_scalar(ncells)
   if (sum(size) > ncells) {
-    stop("The total clones size exceed the total number of cells",
-         call. = FALSE)
+    stop("The total clones size exceed the total number of cells", call. = FALSE)
   }
   ci <- rep(seq_along(size), size)
   ri <- sample(seq_len(ncells), length(ci))
@@ -47,7 +46,7 @@ sim_clone_range <- function(n, ncells, min = 2L, max = 20L) {
 
   size <- integer(n)
   for (i in seq(0, n - 1)) {
-    limit <- pmin(max, (ncells - sum(size)) / (n-i))
+    limit <- pmin(max, (ncells - sum(size)) / (n - i))
     size[i + 1] <- sample(min:limit, 1)
   }
   sim_clone(size, ncells)

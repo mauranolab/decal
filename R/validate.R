@@ -24,9 +24,10 @@ validate_dataframe <- function(x, cols = c()) {
   if (!all(cols %in% colnames(x))) {
     name <- deparse(substitute(x))
     stop("`", name, "` must contain all required columns: ",
-         paste0("`", cols, "`", collapse=", "), "\nfound:",
-         paste0("`", colnames(x), "`", collapse=", "),
-         call. = FALSE)
+      paste0("`", cols, "`", collapse = ", "), "\nfound:",
+      paste0("`", colnames(x), "`", collapse = ", "),
+      call. = FALSE
+    )
   }
 }
 

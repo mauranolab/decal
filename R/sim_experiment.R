@@ -23,7 +23,7 @@ NULL
 #' @param depth cells total UMI count
 #' @param ratio ratio of genes UMI over total UMI count
 #' @export
-sim_experiment <- function(depth, ratio, lfc=0, nclones=10L, min_n=2L, max_n=20L, theta = 100L) {
+sim_experiment <- function(depth, ratio, lfc = 0, nclones = 10L, min_n = 2L, max_n = 20L, theta = 100L) {
   validate_positive_integer(depth)
   validate_rate(ratio)
   validate_numeric(lfc)
@@ -52,7 +52,7 @@ sim_experiment <- function(depth, ratio, lfc=0, nclones=10L, min_n=2L, max_n=20L
 #' with ratio ranging in a logarithm scale from lowest to highest observed
 #' ratio observed.
 #' @export
-sim_experiment_from_data <- function(reference, lfc=0, nclones=10L, min_n=2L, max_n=20L, theta = 100L, ngenes = NULL) {
+sim_experiment_from_data <- function(reference, lfc = 0, nclones = 10L, min_n = 2L, max_n = 20L, theta = 100L, ngenes = NULL) {
   validate_matrix(reference)
   validate_numeric(lfc)
   validate_positive_integer_scalar(nclones)
@@ -60,7 +60,7 @@ sim_experiment_from_data <- function(reference, lfc=0, nclones=10L, min_n=2L, ma
   validate_positive_integer_scalar(max_n)
   validate_numeric(theta)
 
-  ncells  <- ncol(reference)
+  ncells <- ncol(reference)
   ngenes_ <- nrow(reference)
   if (!is.null(ngenes)) {
     validate_positive_integer_scalar(ngenes)
@@ -82,16 +82,18 @@ build_lfc_mat <- function(perturbations, clone, nrow, ncol) {
   lfc_mat <- matrix(0, nrow = nrow, ncol = ncol)
   for (i in seq_len(nrow(perturbations))) {
     clone_i <- perturbations$clone[i]
-    gene_i  <- perturbations$gene[i]
-    lfc_i   <- perturbations$expected_lfc[i]
+    gene_i <- perturbations$gene[i]
+    lfc_i <- perturbations$expected_lfc[i]
     ## WARN PRE-ASSIGNED PERTURBATION WAS OVERWRITTEN DUE TWO CLONES
     ## PERTUBATING THE SAME GENE
     x <- clone_mat[, clone_i] == 1
     if (any(lfc_mat[gene_i, x] != 0)) {
-      warning("Two or more clones pertubated the same gene.",
-              "The intended log2 fold-change may be affected.")
+      warning(
+        "Two or more clones pertubated the same gene.",
+        "The intended log2 fold-change may be affected."
+      )
     }
-    lfc_mat[gene_i,] <- lfc_mat[gene_i,] + x * lfc_i
+    lfc_mat[gene_i, ] <- lfc_mat[gene_i, ] + x * lfc_i
   }
   return(lfc_mat)
 }
@@ -105,7 +107,7 @@ simulate_perturbations <- function(nclones, ngenes, lfc) {
   }
   data.frame(
     clone = rep(seq_len(nclones), each = npert),
-    gene  = as.vector(replicate(nclones, sample(genes, npert))),
+    gene = as.vector(replicate(nclones, sample(genes, npert))),
     expected_lfc = rep(lfc, times = nclones)
   )
 }
