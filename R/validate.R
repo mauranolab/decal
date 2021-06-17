@@ -83,7 +83,7 @@ validate_numeric_scalar <- function(x) {
 #' @noRd
 validate_rate <- function(x) {
   do.call(validate_numeric, list(enquote(x)))
-  if (all(x >= 0 && x <= 1)) {
+  if (!all(x >= 0 && x <= 1)) {
     name <- deparse(substitute(x))
     stop("`", name, "` must be a ratio between 0 and 1", call. = FALSE)
   }
