@@ -20,8 +20,8 @@ NULL
 
 #' @rdname simulate_experiment
 #'
-#' @param depth
-#' @param ratio
+#' @param depth cells total UMI count
+#' @param ratio ratio of genes UMI over total UMI count
 #' @export
 sim_experiment <- function(depth, ratio, lfc=0, nclones=10L, min_n=2L, max_n=20L, theta = 100L) {
   validate_positive_integer(depth)
@@ -46,8 +46,11 @@ sim_experiment <- function(depth, ratio, lfc=0, nclones=10L, min_n=2L, max_n=20L
 
 #' @rdname simulate_experiment
 #'
-#' @param reference
-#' @param ngenes
+#' @param reference UMI count matrix used as base for the simulation
+#' @param ngenes number of genes to be simulated. When `NULL` it replicates
+#' the gene ratio found in `reference`, otherwise it simulates `ngenes`
+#' with ratio ranging in a logarithm scale from lowest to highest observed
+#' ratio observed.
 #' @export
 sim_experiment_from_data <- function(reference, lfc=0, nclones=10L, min_n=2L, max_n=20L, theta = 100L, ngenes = NULL) {
   validate_matrix(reference)
