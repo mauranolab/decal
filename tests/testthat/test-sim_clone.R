@@ -8,10 +8,14 @@ test_that("sim_clone() and sim_clone_range() input requirements", {
     expect_error(sim_clone_range(2, 10L, min = vars[[i]]), "must be a positive integer")
     expect_error(sim_clone_range(2, 10L, max = vars[[i]]), "must be a positive integer")
   }
-  expect_error(sim_clone_range(2, 10L, min = 10, max = 2),
-               "Minimum number of cells per clone must be less than the maximum")
-  expect_error(sim_clone_range(10, 10L),
-               "Unable to generate clones with current `ncells` limit")
+  expect_error(
+    sim_clone_range(2, 10L, min = 10, max = 2),
+    "Minimum number of cells per clone must be less than the maximum"
+  )
+  expect_error(
+    sim_clone_range(10, 10L),
+    "Unable to generate clones with current `ncells` limit"
+  )
 })
 
 test_that("sim_clone() produces expected clone", {

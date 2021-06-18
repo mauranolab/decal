@@ -5,9 +5,9 @@ ratio <- seq(0.01, 0.05, length.out = ngene)
 lfc <- rep(c(-2, -.5, 0, .5, 2), c(2, 2, 5, 2, 2))
 
 estimate_lfc <- function(count, x) {
-  r0 <- rowSums(count[,!x, drop=FALSE]) / sum(depth[!x])
-  r1 <- rowSums(count[, x, drop=FALSE]) / sum(depth[x])
-  return(log2(r1/r0))
+  r0 <- rowSums(count[, !x, drop = FALSE]) / sum(depth[!x])
+  r1 <- rowSums(count[, x, drop = FALSE]) / sum(depth[x])
+  return(log2(r1 / r0))
 }
 
 test_that("sim_experiment() outputs the expected output", {
@@ -16,7 +16,7 @@ test_that("sim_experiment() outputs the expected output", {
   ## Check count
   count <- res$count
   expect_equal(dim(count), c(ngene, ncell))
-  expect_equal(var(rowSums(count)/sum(count) - ratio), 0, tolerance = 1e-4)
+  expect_equal(var(rowSums(count) / sum(count) - ratio), 0, tolerance = 1e-4)
   ## Check clone
   clone <- res$clone
   sizes <- sapply(clone, length)
@@ -35,20 +35,20 @@ test_that("sim_experiment() outputs the expected output", {
   for (ci in seq_len(10L)) {
     xi <- seq_len(ncell) %in% clone[[ci]]
     gi <- pert$gene[pert$clone == ci]
-    expect_equal(estimate_lfc(count[gi,], xi), lfc, tolerance = 1)
+    expect_equal(estimate_lfc(count[gi, ], xi), lfc, tolerance = 1)
   }
 })
 
 test_that("sim_experiment_from_data() outputs the expected output", {
   ref <- ratio %o% depth
-  rat <- 10 ** (seq(log10(min(ratio)), log10(max(ratio)), length.out = 500L))
+  rat <- 10**(seq(log10(min(ratio)), log10(max(ratio)), length.out = 500L))
 
   res <- sim_experiment_from_data(ref, lfc, nclones = 10L, min_n = 5, max_n = 20, ngenes = 500L)
   expect_named(res, c("perturbations", "clone", "count"))
   ## Check count
   count <- res$count
   expect_equal(dim(count), c(500L, ncell))
-  expect_equal(var(rowSums(count)/sum(count) - rat), 0, tolerance = 1e-3)
+  expect_equal(var(rowSums(count) / sum(count) - rat), 0, tolerance = 1e-3)
   ## Check clone
   clone <- res$clone
   sizes <- sapply(clone, length)
@@ -67,13 +67,13 @@ test_that("sim_experiment_from_data() outputs the expected output", {
   for (ci in seq_len(10L)) {
     xi <- seq_len(ncell) %in% clone[[ci]]
     gi <- pert$gene[pert$clone == ci]
-    expect_equal(estimate_lfc(count[gi,], xi), lfc, tolerance = 1)
+    expect_equal(estimate_lfc(count[gi, ], xi), lfc, tolerance = 1)
   }
 })
 
 test_that("sim_experiment fails when request more perturbations than genes", {
   expect_error(
-    sim_experiment(depth, seq(0.01, 0.05, length.out=10), lfc = rep(0, 20)),
+    sim_experiment(depth, seq(0.01, 0.05, length.out = 10), lfc = rep(0, 20)),
     "number of perturbations exceed the total number of genes"
   )
 })

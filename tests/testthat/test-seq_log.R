@@ -3,7 +3,7 @@ test_that("seq_log() parameters type requirements", {
   for (i in seq_along(uns)) {
     expect_error(seq_log(uns[[i]], 10, 100), "must be a numeric scalar")
     expect_error(seq_log(1, uns[[i]], 100), "must be a numeric scalar")
-    expect_error(seq_log(1, 10, 100, base=uns[[i]]), "must be a numeric scalar")
+    expect_error(seq_log(1, 10, 100, base = uns[[i]]), "must be a numeric scalar")
     expect_error(seq_log(1, 10, uns[[i]]), "must be a positive integer scalar")
   }
   expect_error(seq_log(1, 10, 0.5), "must be a positive integer scalar")

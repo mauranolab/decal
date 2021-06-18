@@ -13,8 +13,10 @@ test_that("sim_count produce the expected output", {
 
 test_that("sim_count_from_data produce the expected output", {
   mu <- ratio %o% depth
-  ref <- matrix(rnbinom(ncell * ngene, size = 100L, mu = mu),
-                ncol = ncell, nrow = ngene)
+  ref <- matrix(
+    rnbinom(ncell * ngene, size = 100L, mu = mu),
+    ncol = ncell, nrow = ngene
+  )
   res <- sim_count_from_data(ref)
   expect_true(is.matrix(res))
   expect_equal(ncol(res), ncell)
@@ -25,9 +27,9 @@ test_that("sim_count_from_data produce the expected output", {
 test_that("sim_count_from_data with ngenes produce the expected output", {
   ## NOTE: THAT FOR SMALL N THE INDEPENDENCE DOESN'T HOLD AND RATIO DEVIATES
   ## FROM EXPECTED
-  n   <- 50
+  n <- 50
   ref <- ratio %o% depth
-  rat <- 10 ** (seq(log(min(ratio), 10), log(max(ratio), 10), length.out = n))
+  rat <- 10**(seq(log(min(ratio), 10), log(max(ratio), 10), length.out = n))
   res <- sim_count_from_data(ref, ngenes = n)
 
   expect_true(is.matrix(res))
@@ -58,17 +60,17 @@ test_that("sim_clone_from_data checks parameters", {
   unsupported <- list("C", TRUE, list(1, 2))
   for (val in unsupported) {
     expect_error(sim_count_from_data(val), "must be a matrix")
-    expect_error(sim_count_from_data(ref, lfc=val), "must be numeric")
-    expect_error(sim_count_from_data(ref, theta=val), "must be numeric")
-    expect_error(sim_count_from_data(ref, ngenes=val), "must be a positive integer")
+    expect_error(sim_count_from_data(ref, lfc = val), "must be numeric")
+    expect_error(sim_count_from_data(ref, theta = val), "must be numeric")
+    expect_error(sim_count_from_data(ref, ngenes = val), "must be a positive integer")
   }
   ## check only takes matrices
   expect_error(sim_count_from_data(1), "must be a matrix")
   expect_error(sim_count_from_data(c(1, 2)), "must be a matrix")
   ## check is positive integer
-  expect_error(sim_count_from_data(ref, ngenes=-1), "must be a positive integer")
-  expect_error(sim_count_from_data(ref, ngenes=0), "must be a positive integer")
-  expect_error(sim_count_from_data(ref, ngenes=1.2), "must be a positive integer")
+  expect_error(sim_count_from_data(ref, ngenes = -1), "must be a positive integer")
+  expect_error(sim_count_from_data(ref, ngenes = 0), "must be a positive integer")
+  expect_error(sim_count_from_data(ref, ngenes = 1.2), "must be a positive integer")
 })
 
 test_that("sim_count check dimensions requirements", {
@@ -81,12 +83,18 @@ test_that("sim_count check dimensions requirements", {
     "`lfc` must be a scalar, vector of same length as `depth` or a matrix"
   )
   ## Check lfc matrix dimensions
-  expect_error(sim_count(depth, ratio, lfc = matrix(0, nrow=10, ncol=10)),
-               "Incompatible dimensions")
-  expect_error(sim_count(depth, ratio, lfc = matrix(0, nrow=ngene, ncol=10)),
-               "Incompatible dimensions")
-  expect_error(sim_count(depth, ratio, lfc = matrix(0, nrow=10, ncol=ncell)),
-               "Incompatible dimensions")
+  expect_error(
+    sim_count(depth, ratio, lfc = matrix(0, nrow = 10, ncol = 10)),
+    "Incompatible dimensions"
+  )
+  expect_error(
+    sim_count(depth, ratio, lfc = matrix(0, nrow = ngene, ncol = 10)),
+    "Incompatible dimensions"
+  )
+  expect_error(
+    sim_count(depth, ratio, lfc = matrix(0, nrow = 10, ncol = ncell)),
+    "Incompatible dimensions"
+  )
 })
 
 test_that("sim_count includes gene and cell names", {
@@ -108,8 +116,8 @@ test_that("sim_count_from_data preserves gene and cell names", {
 
 test_that("sim_count produces the desired log fold-change", {
   estimate_lfc <- function(mat, x) {
-    r0 <- rowSums(mat[, x == 0, drop=FALSE]) / sum(depth[x == 0])
-    r1 <- rowSums(mat[, x == 1, drop=FALSE]) / sum(depth[x == 1])
+    r0 <- rowSums(mat[, x == 0, drop = FALSE]) / sum(depth[x == 0])
+    r1 <- rowSums(mat[, x == 1, drop = FALSE]) / sum(depth[x == 1])
     log2(r1 / r0)
   }
 
