@@ -1,3 +1,28 @@
+test_that("decal recognize named indexes", {
+  cname <- sprintf("cell-%03d", seq_len(100))
+  rname <- sprintf("gene-%03d", seq_len(100))
+  gname <- sprintf("clone-%03d", seq_len(5))
+  cols <- c(
+    "gene", "clone", "n0", "n1", "x0", "x1", "mu", "theta",
+    "xb", "z", "lfc", "pvalue", "p_adjusted"
+  )
+
+  count <- matrix(rpois(100 * 100, 10), ncol=100, dimnames = list(rname, cname))
+  clone <- split(seq_len(100), gname[sample(1:5, 100, replace = TRUE)])
+  clone <- sapply(clone, function(x) cname[x])
+  perturbations <- data.frame(
+    gene = rname[sample(which(rowMeans(count) > 1), 20, replace=TRUE)],
+    clone = gname[sample(1:5, 20, replace=TRUE)]
+  )
+
+  result <- decal(perturbations, count, clone)
+  expect_type(result, typeof(perturbations))
+  expect_equal(nrow(result), nrow(perturbations))
+  expect_named(result, cols, ignore.order = TRUE)
+  expect_equal(result$mu, rowMeans(count)[perturbations$gene],
+               ignore_attr = TRUE)
+})
+
 test_that("decal validates perturbation format", {
   count <- matrix(rpois(100 * 100, 10), ncol=100)
   clone <- split(seq_len(100), sample(1:5, 100, replace = TRUE))

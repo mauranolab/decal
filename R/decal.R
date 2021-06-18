@@ -71,7 +71,7 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   )
   ## Extract indexes
   rowidx <- get_index(perturbations[[gene_col]], rownames(count))
-  colidx <- get_index(perturbations[[clone_col]], colnames(clone))
+  colidx <- get_index(perturbations[[clone_col]], names(clone))
   mtxidx <- cbind(rowidx, colidx)
   if (any(is.na(rowidx)) || any(is.na(colidx))) {
     warning(
