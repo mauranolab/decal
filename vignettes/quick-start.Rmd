@@ -1,0 +1,427 @@
+---
+title: "Analyzing single-cell RNA-seq perturbation with DECAL"
+author: "André M. Ribeiro-dos-Santos"
+date: "`r format(Sys.Date(), '%m/%d/%Y')`"
+abstract: >
+  TODO: Package abstract
+  decal package version: `r packageVersion("decal")`
+output:
+  rmarkdown::html_document:
+    highlight: pygments
+    toc: true
+    df_print: kable
+    fig_width: 5
+    fig_caption: true
+vignette: >
+  %\VignetteIndexEntry{Analyzing single-cell RNA-seq perturbation with scCloneDE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  tidy = FALSE, cache = FALSE, dev = "png", collapse = TRUE, comment = "#>",
+  message = FALSE, error = FALSE, warning = TRUE
+)
+options(scipen = 1, digits = 2)
+```
+
+# DECAL Workflow
+
+**DECAL** (**D**ifferential **E**xpression analysis of **C**lonal
+**A**lterations **L**ocal effects) provide you tools to conduct differential
+expression analysis of single-cell perturbations to potential interacting
+genes.
+Similar to other expression analysis tools, it models gene expression using
+a _Negative Binomial_ (or _Gamma-Poisson_) regression, modeling each gene
+UMI count by the cell total count and the cell alteration status.
+
+## Quick Start
+
+`decal` is the package main function which estimates each gene dispersion
+($\theta$) parameter and fit a _Negative Binomial_ regression to each gene
+and alteration pair specified to evaluate the perturbation statistical
+significance.
+It requires three parameters a UMI count matrix, a list specifying your clones
+cell (count matrix columns) composition, and a table indicating the potential
+alteration and affected gene to evaluate.
+
+This package provide you tools to conduct differential expression analysis of
+single-cell perturbations to interacting genes.
+It models the perturbation to a gene UMI count using a _Negative Binomial_
+regression controlled by the cell total count.
+Provided the required data, the function `decal` will estimate each gene
+dispersion parameter and fit a regression model to each gene and perturbation
+pair and evaluate the perturbation statistical significance.
+Such analysis is usually conducted after several steps which include generating
+your single-cell UMI count matrix, determination of your perturbations clonal
+population, and electing potential perturbations to evaluate.
+
+Below we show a quick example of the basic steps to conduct the interactions
+differential expression analysis using our package.
+
+```{r quick_start}
+library(decal)
+
+data("sim_decal")
+perturbations <- sim_decal$perturbations
+count <- sim_decal$count
+clone <- sim_decal$clone
+
+res <- decal(perturbations, count, clone)
+head(res)
+```
+
+Here we used a simulated dataset (`sc_simulated`) made available and is
+composed of the three required parameters: a UMI count matrix (`count`), a
+list of cells dived by clonal population (`clone`), and a table of candidate
+interactions to be evaluated (`perturbations`).
+Given the required input, `decal` conducts the whole differential analysis
+and updates the `perturbations` table to include the following:
+
+- `n0` and `n1`: number of non-perturbed and perturbed cells, respectively.
+- `x0` and `x1`: average UMI count among perturbed and non-perturbed cells,
+  respectively.
+- `mu`: average UMI count among all cells.
+- `xb`: expected average UMI count of perturbed cells.
+- `theta`: estimated _negative binomial_ dispersion parameter.
+- `z`: estimated perturbation z-score.
+- `lfc`: _log2 fold-change_ of perturbed cells gene expression.
+- `pvalue` and `p_adjusted`: perturbation _t-test_ significance values.
+
+## Features
+
+## XX
+
+Admitting a _false discovery rate_ (_FDR_) of 05%, we can explore which
+interactions indicated real expression change by picking those with
+`p_adjusted < 0.05`. See below the results for top 5 significant interactions
+with increasing and decreasing expression effects.
+
+```{r quick_start_significant}
+sig <- subset(res, p_adjusted < 0.05)
+sig <- sig[order(sig$lfc), ]
+
+sig[c(1:5, nrow(sig) - 1:5),]
+```
+
+```{r quick_start_plot_it, fig.height = 4}
+sf <- mean(colSums(count)) / colSums(count)
+
+par(mfrow = c(2, 2), mar = c(2, 2, 3, 2))
+for (i in c(1, 2, nrow(sig) - 1, nrow(sig) - 2)) {
+  x <- colnames(count) %in% clone[[sig$clone[i]]]
+  y <- log2(count[sig$gene[i],] * sf + 1)
+  n <- length(x)
+  title <- paste0(sig$clone[i], "+", sig$gene[i],"\nLFC: ", round(sig$lfc[i], 2))
+  plot(
+    x + runif(n, -.3, .3), y, xlab = "", ylab = "Gene Expression",
+    axes = FALSE, xlim = c(-.5, 1.5), ylim = c(0.9, 1.1) * range(y),
+    main = title
+  )
+  axis(1, at = 0:1, labels = c("perturbed", "unperturbed"))
+  axis(2, at = log2(c(0, 5, 10, 20, 50, 100) + 1), labels = c(0, 5, 10, 20, 50, 100))
+  ## add error bar
+  ymed <- c(sig$mu[i], sig$xb[i])
+  ylow <- log2(qnbinom(0.025, size = sig$theta[i], mu = ymed) + 1)
+  yupr <- log2(qnbinom(0.975, size = sig$theta[i], mu = ymed) + 1)
+  points(c(0, 1), log2(ymed + 1), col = "firebrick", cex = 1, pch = 16)
+  arrows(
+    x0 = c(0, 1), y0 = ylow, x1 = c(0, 1), y1 = yupr,
+    code = 3, angle = 90, col = "firebrick", length = .1, lwd = 2
+  )
+}
+```
+
+Since we include some real gene perturbation to our simulated dataset, we can
+explore how well our model predicts the change. The `perturbations` table
+includes a column `expected_lfc` column that indicates the real perturbation
+applied when simulating `count`, where `expected_lfc == 0` indicate no
+perturbation was applied.
+First, we can evaluate our model fitting using the following confusion matrix.
+
+```{r quick_start_confusion}
+real_effect <- res$expected_lfc != 0
+estimated_effect <- res$p_adjusted < 0.05
+
+confusion_mat <- table(estimated_effect, real_effect)
+round(prop.table(confusion_mat), 3)
+```
+The confusion matrix indicates that admitting 5% _FDR_, our model presented:
+
+- **Accuracy**: `r round(sum(diag(confusion_mat)) / sum(confusion_mat), 3)`
+- **Precision**: `r round(confusion_mat[2, 2] / sum(confusion_mat[2,]), 3)`
+- **Recall**: `r round(confusion_mat[2, 2] / sum(confusion_mat[,2]), 3)`
+- **Observed FDR**: `r round((confusion_mat[1, 2] + confusion_mat[2, 1]) / sum(confusion_mat), 3)`
+
+We can also evaluated how well our model predicted the real _log2 fold-change_
+perturbation.
+Illustrated below is the estimated `lfc` distribution for each value of
+perturbation applied.
+
+```{r quick_start_hist}
+real_lfc <- res$expected_lfc
+estimate_lfc <- res$lfc
+
+breaks <- c(-Inf, seq(-5, 5, length.out = 30), Inf)
+histograms <- lapply(split(estimate_lfc, real_lfc), hist, breaks = breaks, plot = FALSE)
+
+ymax <- max(sapply(histograms, function(x) x$count / sum(x$count)))
+plot(
+  x = c(-5, 5), y = c(0, ymax), type = "n",
+  xlab = "Estimated LFC", ylab = "Proportion of interactions"
+)
+for (i in seq_along(histograms)) {
+  hist <- histograms[[i]]
+  lines(hist$mids, hist$count/sum(hist$count), col = i, type = "s")
+}
+legend(
+  "topleft", title = "Real LFC", legend = names(histograms),
+  col = seq_along(histograms), bty = "n", lty = 1, lwd = 2, ncol = 2
+)
+```
+
+Below we measured the estimate _Mean Squared Error_ (_MSE_) and _Rooted MSE_
+(_RMSE_) for each real perturbation value.
+
+```{r quick_start_rmse}
+mse_estimate <- sapply(split(res, res$expected_lfc), function(dat) {
+  dat <- dat[complete.cases(x),]
+  mse <- mean( (dat$expected_lfc - dat$lfc)^2, na.rm = TRUE )
+  c(real_lfc = dat$expected_lfc[1], N = nrow(x), MSE = mse, RMSE = sqrt(mse))
+})
+
+round(t(mse_estimate), 2)
+```
+
+Though the _MSE_ increased for negative _LFC_, the model presents high accuracy
+and precision in estimating real perturbation effects as demonstrated by the
+results above.
+
+## Understanding arguments
+
+The analysis is performed by the function `decal` which requires three main
+parameters:
+
+1. A table of clones and potentially perturbed genes (or feature).
+2. A single-cell UMI count matrix.
+3. A list of cells defining each clone composition.
+
+Here we will dive down into 1 and 3, and how to define them.
+
+### Defining your cells clonal structure
+
+The analysis was designed to explore the expression difference of a
+perturbation replicated to a clonal population of cells. We recommend using
+an adjacent dataset to define your cells clonal populations and their
+perturbation composition. For the analysis here, we recommend define each
+of your clones' cell composition as a list of character (cells id) or integer
+(cells index) vectors, such as the example below:
+
+```{r var_clone}
+clone[1:3]
+```
+
+### Electing potential gene perturbation
+
+Since we aim to explore specific gene perturbations, we must specify pairs of
+clone population and genes (or features) to evaluate expression change among
+the clone cells in regards to all others.
+In our original study, we located our perturbations and evaluated expression
+change to all genes with TSS within _250Kbp_ of the perturbation.
+Here, we specify the these pairs of clone and perturbed genes to evaluate as
+a table with a `clone` and `gene` column indicating the clone/gene id
+(as character) or index (as integer), such as the example below:
+
+```{r var_interactions}
+head(perturbations)
+```
+
+## Reducing noise and increasing power
+
+To improve results, `decal` include some filtering step to skip testing
+interactions with low statistical power.
+Among these filter parameters are included:
+
+- `min_x`: minimal average count observed on non-perturbed or perturbed cells
+  (indicated by `x0` and `x1`, respectively, on the output table).
+- `min_n`: minimal number of perturbed cells (indicated by `n1`).
+- `min_mu`: minimal global average count (indicated by `mu`), also
+  required to estimate dispersion`theta`.
+
+Interactions that doesn't met all of theses requirements are skipped and no
+differential analysis is conducted, though they are still included in the
+result table.
+By default, `decal` is set to our suggestion that presented a good
+performance in our dataset: `min_x = 1`; `min_n = 2`; and `min_mu = 0.05`.
+
+# Understanding decal model
+
+## Statistical model
+
+The `decal` model is based on the observations of _Svensson (2020)_ and
+_Townes et al. 2019_ that the UMI counts of a particular gene approximates a
+_Poisson_ or _Negative Binomial_ distribution in a single-cell RNA-seq
+experiment. Thus, we proposed the observed count with following model:
+
+$$Y_{gc} \sim NB(\mu_{gci}, \theta_g)$$
+$$log(\mu_{gci}) = \beta_g + \beta_d D_c + \beta_x X_{ci}$$
+
+where UMI count $Y_{cg}$ for gene _g_ and cell _c_ are modeled using a
+_negative binomial_ distribution with fitted mean $\mu_{cgi}$ and a
+gene-specific dispersion parameter $\theta_g$. The log fitted mean is
+proportional to the cell log total count ($D_c = \sum_g Y_{cg}$) and the
+perturbation effect ($\beta_x$) of a specific clone _i_ with $X_{ci}$ is
+an indicator variable if the cell belong or not the perturbed clone.
+
+The parameter $\theta_g$ determines the model variance where smaller values
+indicate a wider distribution and higher values produce a tighter distribution
+that coincides with a Poisson distribution.
+
+$$Var(Y_{cg}) = E[(Y_{cg} - \mu_{cgi})^2] = \mu_{cgi} + \mu_{cgi}^2/\theta_g$$
+
+$$\lim_{\theta\to\infty} NB(\mu, \theta) = Pois(\mu)$$
+
+Our model is similar to previously published tools such as`edgeR`
+(_Robinson et al. 2010_; _McCarthy et al. 2012_), `DESeq`
+(_Anders and Huber, 2010_; _Love et al. 2014_), and glmGamPoi
+(_Ahlmann-Eltze & Huber 2020_).
+But it differs in two points: (i) we adopted a regularized strategy to estimate
+$\theta_g$ to make it more robust to sampling noise such as described by
+_Hafemeister & Satija (2019)_; and (ii)
+
+- TODO: complete section
+
+## Estimating dispersion
+
+Here we apply the strategy used by _Hafemeister & Satija (2019)_ to estimate
+$\theta_g$. First, we sample ~ 2000 genes and make a naive estimate of their
+expression using a Poisson regression modeled as $Y_{cg} \sim Poi(mu_{cg})$
+such as $log(mu_{cg}) = \beta_g + \beta_d D_c$. Next, we estimate a naive
+dispersion parameter using a maximum likelihood estimator, fit a kernel smooth
+regression to regularize the parameter as a function of average gene count
+($\sum_g Y_{cg} / N$), and using this regression to produce the final $\theta_g$
+for all other genes.
+
+```{r}
+dat <- res[, c("gene", "mu", "theta", "raw_theta")]
+dat <- res[complete.cases(res),]
+dat <- unique(dat[order(dat$mu),])
+
+plot(
+  log10(dat$mu), dat$raw_theta,
+  xlab = "Average expression (mu)", ylab = expression(theta),
+  xaxt = "n", ylim = c(0, 150)
+)
+abline(h = 100)
+lines(log10(dat$mu), dat$theta, col = "firebrick")
+legend(
+  "topleft", c("naive estimate", "regularized estimate", "real"),
+  pch = c(1, NA, NA), lty = c(NA, 1, 1), col = c(1, 2, 1)
+)
+breaks <- log10(c(0.01, 0.1, 1, 2, 5, 10, 20, 50, 100))
+axis(1, at = breaks, labels = round(10**breaks, 2))
+```
+
+# Simulating
+xx
+
+Many factor can affect our model **power** and **sensitivity**, thus we also
+include tools to simulate and measure your experiments power under your
+conditions
+
+Thus we can measure our false discovery rate, given our current cutoff
+(`qvalue < 0.10`), by producing the following confusion matrix.
+
+```{r quick_start_confusion_matrix}
+# round(prop.table(
+#   table(real = res$estimated_lfc != 0, estimated = res$p_adjusted < 0.05)), 2)
+```
+
+To power your analysis, I've included some functions that facilitate and allow
+you to perform a randomization experiment to estimate the test `z-score` under
+no effect and estimate test power under our model assumptions.
+
+## Null hypothesis estimation
+
+```{r sim_randomization, fig.height=3, fig.width=9}
+rnd_perturbations <- data.frame(
+  clone = sample(names(clone), 1000, replace = TRUE),
+  gene = sample(rownames(count), 1000, replace = TRUE)
+)
+rnd_res <- decal(rnd_perturbations, count, clone)
+rnd_res <- subset(rnd_res, !is.na(rnd_res$pvalue))
+
+par(mfrow = c(1, 4))
+hist(rnd_res$z, xlab = "Z-score", main = "")
+hist(rnd_res$pvalue, xlab = "Observed Pvalue", main = "")
+plot(-log10(ppoints(rnd_res$pvalue)), -log10(sort(rnd_res$pvalue)),
+  xlab = "Expected -log10(P)",
+  ylab = "Observed -log10(P)")
+abline(0, 1, col = "red")
+hist(rnd_res$p_adjusted, xlab = "Observed Qvalue", main = "")
+```
+
+## Power analysis
+
+```{r sim_power, fig.height=4, fig.width=8}
+## for each clone perturb 10 genes with -2, -1, 1, and 2 log2 FC and add 100
+## interactions with no effect.
+lfc <- c(-2, -1, 1, 2)
+pwr_lfc <- c(rep(lfc, each = 10), rep(0, 100))
+pwr_dat <- sim_experiment_from_data(count, pwr_lfc, nclones = 20, min_n = 5, max_n = 20)
+dimnames(pwr_dat$count) <- NULL
+pwr_res <- decal(pwr_dat$perturbations, pwr_dat$count, pwr_dat$clone)
+pwr_res <- subset(pwr_res, !is.na(pvalue))
+
+## Confusion matrix
+prop.table(table(
+  actual = pwr_res$expected_lfc != 0,
+  estimated = pwr_res$p_adjusted < 0.10
+  ),2)
+
+## Histogram of estimated LFC for different effects
+breaks <- c(-Inf, seq(-3.5, 3.5, length.out = 30) ,Inf)
+histograms <- lapply(
+  split(
+    pwr_res$lfc[pwr_res$expected_lfc %in% lfc],
+    pwr_res$expected_lfc[pwr_res$expected_lfc %in% lfc]
+  ), hist, breaks = breaks, plot = FALSE
+)
+ymax <- max(sapply(histograms, function(x) x$count / sum(x$count))) * 1.05
+## Estimate power by LFC
+pwr <- sapply(split(
+  pwr_res$p_adjusted[pwr_res$expected_lfc %in% lfc] < 0.05,
+  pwr_res$expected_lfc[pwr_res$expected_lfc %in% lfc]
+  ), mean)
+
+par(mfrow = c(1, 2))
+plot(c(-3.5, 3.5), c(0, ymax), type = "n", xlab = "Estimated LFC", ylab = "Frequency")
+for(i in seq_along(histograms)) {
+  lines(histograms[[i]]$mids, histograms[[i]]$count / sum(histograms[[i]]$count), col = i, type = "s")
+}
+legend(
+  "topleft", title = "Actual LFC", legend = sprintf("%+d", lfc),
+  col = seq_along(lfc), bty = "n", lty = 1, cex = .7
+)
+## Barplot of power estimate
+barplot(pwr, xlab = "LFC", ylab = "Power")
+```
+
+# Assumptions and Caveats
+
+xxx
+
+# Features
+
+- **tidyverse** compatible
+
+# Session info
+
+```{r sessionInfo}
+sessionInfo()
+```
+
+# References
+
