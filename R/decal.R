@@ -83,10 +83,11 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   perturbations <- cbind(perturbations, data.frame(
     n0 = ncol(count) - n1[colidx], n1 = n1[colidx],
     x0 = x0[mtxidx], x1 = x1[mtxidx], mu = mu[rowidx],
-    theta = mu[rowidx],
+    raw_theta = attr(theta, "raw")[rowidx], theta = theta[rowidx],
     xb = NA_real_, z = NA_real_, lfc = NA_real_,
     pvalue = NA_real_, p_adjusted = NA_real_
   ))
+  attr(perturbations, "raw_theta") <- attr(theta, "raw")[rowidx]
   ## Fit analysis
   which_test <- which(
     (perturbations$x1 >= min_x | perturbations$x0 >= min_x) &
@@ -114,9 +115,7 @@ build_clone_matrix <- function(clone, cells) {
     stop("`clone` must be a list of cells", call. = FALSE)
   }
   if (any(!is_index(unlist(clone)))) {
-    stop("`clone` cells list must be integer or character indexes",
-      call. = FALSE
-    )
+    stop("`clone` cells list must be integer or character indexes", call. = FALSE)
   }
   validate_index(cells)
   ## Vectorize clone list
@@ -163,7 +162,7 @@ regularize_theta <- function(logmu1, theta1, logmu) {
 
 #' @importFrom stats approx density
 #' @noRd
-estimate_theta <- function(count, mu, log_dp, n, genes) {
+estimate_theta <- function(count, mu, log_dp, n = 2000, genes) {
   ## Subsample
   genes <- or(genes, which(mu > 0))
   logmu <- log(mu)[genes]
@@ -182,8 +181,11 @@ estimate_theta <- function(count, mu, log_dp, n, genes) {
   theta1 <- estimate_theta_raw(count, genes, log_dp)
   ## Step2. Regularize theta estimate
   ## TODO: remove outliers?
+  raw <- numeric(nrow(count))
+  raw[genes1] <- theta1
   theta <- numeric(nrow(count))
   theta[genes] <- regularize_theta(logmu1, theta1, logmu)
+  attr(theta, "raw") <- raw
   return(theta)
 }
 
