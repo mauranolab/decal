@@ -1,11 +1,11 @@
 ## code to prepare `sc_simulated` dataset goes here
-set.seed(919564)
+set.seed(55919564)
 devtools::load_all()
 
-nclone <- 25
+nclone <- 15
 ncells <- 1000
 ngenes <- 1500
-lfc <- rep(c(0, 1, 2, 3, -1, -2, -3), c(80, 5, 5, 5, 5, 5, 5))
+lfc <- rep(c(0, 1, 2, 3, -1, -2, -3), c(20, 5, 5, 2, 5, 5, 2))
 
 depth <- floor(rlnorm(ncells, 9, .5))
 names(depth) <- sprintf("cell%03d", seq_along(depth))
