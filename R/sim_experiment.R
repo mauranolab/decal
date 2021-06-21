@@ -80,7 +80,7 @@ sim_experiment_from_data <- function(reference, lfc = 0, nclones = 10L, min_n = 
 build_lfc_mat <- function(perturbations, clone, nrow, ncol) {
   clone_mat <- build_clone_matrix(clone, seq_len(ncol))
   lfc_mat <- matrix(0, nrow = nrow, ncol = ncol)
-  for (i in seq_len(nrow(perturbations))) {
+  for (i in which(perturbations$expected_lfc != 0)) {
     clone_i <- perturbations$clone[i]
     gene_i <- perturbations$gene[i]
     lfc_i <- perturbations$expected_lfc[i]
