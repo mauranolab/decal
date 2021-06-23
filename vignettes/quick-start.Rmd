@@ -367,6 +367,24 @@ legend(
 )
 ```
 
+## Assumptions and Caveats
+
+This statistical model implies some assumptions and caveats:
+
+1. The UMI count distribution is independent between genes, which is usually
+  true for single-cell experiments due to large quantity of genes and small
+  proportion of counts each of them represent.
+2. The effect of individual clones are not enough to disrupt the unperturbed
+  cells expression estimates. For such assumption, the number of perturbated
+  cells of any clone must be much smaller than the total number of cells
+  available (`n1 << n0`). This allow us to explore each clone independently
+  since it makes unlikely a gene unperturbed estimate is affected by other
+  clones, since they don't represent enough cells to disrupt the overall gene
+  expression.
+3. The cells represent a uniform population differing only by the induced
+  perturbations. This can easily be obtained when the experiment is conducted
+  in a cell culture.
+
 # Simulating
 xx
 
@@ -462,14 +480,6 @@ legend(
 barplot(pwr, xlab = "LFC", ylab = "Power")
 ```
 
-# Assumptions and Caveats
-
-xxx
-
-# Features
-
-- **tidyverse** compatible
-
 - [@hafemeister_normalization_2019]
 - [@svensson_droplet_2020]
 - [@townes_feature_2019]
@@ -488,5 +498,3 @@ sessionInfo()
 # References
 
 <div id="refs"></div>
-
-# Appendix
