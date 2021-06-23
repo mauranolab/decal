@@ -234,7 +234,7 @@ data.frame(
 Although _MSE_ and _RMSE_ increase for negative _LFC_, the model still presents
 a high accuracy and precision when estimating real perturbations effects.
 
-## Understanding arguments
+# Understanding arguments
 
 To run `decal` function, it requires three main parameters:
 
@@ -243,7 +243,7 @@ identified by a `clone` and `gene` pair.
 2. `count`, a UMI count matrix.
 3. `clone`, a list of cells defining each clone compositions.
 
-### Electing potential gene perturbation
+## Electing potential gene perturbation
 
 Since `decal` was designed to explore specific gene perturbations, it requires
 you to specify clone and gene pairs to evaluate expression change among the
@@ -265,7 +265,7 @@ a table with a `clone` and `gene` column indicating the clone/gene id
 head(perturbations)
 ```
 
-### Defining your experiment clonal structure
+## Defining your experiment clonal structure
 
 `decal` allow you to explore multiple cell groups and explore specific gene
 expression change caused to this group of cells. In our experiment, we used
@@ -281,69 +281,74 @@ clone[1:2]
 
 ## Reducing noise and increasing power
 
-To improve results, `decal` include some filtering step to skip testing
-interactions with low statistical power.
-Among these filter parameters are included:
+To improve your findings, `decal` includes some filtering arguments to avoid
+testing interactions with low statistical power. Filters include:
 
-- `min_x`: minimal average count observed on non-perturbed or perturbed cells
-  (indicated by `x0` and `x1`, respectively, on the output table).
+- `min_x`: minimal average UMI count on perturbed and unperturbed cells
+  (indicated by `x1` and `x0` on resulting table, respectively).
 - `min_n`: minimal number of perturbed cells (indicated by `n1`).
-- `min_mu`: minimal global average count (indicated by `mu`), also
-  required to estimate dispersion`theta`.
+- `min_mu`: minimal global average count (indicated by `mu`), also skips
+  `theta` estimation.
 
-Interactions that doesn't met all of theses requirements are skipped and no
-differential analysis is conducted, though they are still included in the
-result table.
-By default, `decal` is set to our suggestion that presented a good
-performance in our dataset: `min_x = 1`; `min_n = 2`; and `min_mu = 0.05`.
+Interactions that doesn't met all of these requirements are skipped and no
+differential expression analysis is conducted, eventhough they are no removed
+from the results.
+By default, `min_x = 1`; `min_n = 2`; and `min_mu = 0.05`.
 
-# Understanding decal model
+# Understanding `decal` model
 
 ## Statistical model
 
-The `decal` model is based on the observations of _Svensson (2020)_ and
-_Townes et al. 2019_ that the UMI counts of a particular gene approximates a
-_Poisson_ or _Negative Binomial_ distribution in a single-cell RNA-seq
-experiment. Thus, we proposed the observed count with following model:
+The `decal` statistical model is based on the observations from
+@svensson_droplet_2020 and @townes_feature_2019 that UMI counts of a particular
+gene approximates a _Poisson_ or _Negative Binomial_ distribution in a
+single-cell RNA-seq experiment.
+Thus, we proposed to model the observed counts as follow:
 
 $$Y_{gc} \sim NB(\mu_{gci}, \theta_g)$$
-$$log(\mu_{gci}) = \beta_g + \beta_d D_c + \beta_x X_{ci}$$
 
-where UMI count $Y_{cg}$ for gene _g_ and cell _c_ are modeled using a
-_negative binomial_ distribution with fitted mean $\mu_{cgi}$ and a
-gene-specific dispersion parameter $\theta_g$. The log fitted mean is
-proportional to the cell log total count ($D_c = \sum_g Y_{cg}$) and the
-perturbation effect ($\beta_x$) of a specific clone _i_ with $X_{ci}$ is
-an indicator variable if the cell belong or not the perturbed clone.
+where $Y_{cg}$ is the UMI count for gene _g_ and cell _c_ modeled using a
+_negative binomial_ distribution with expected count $\mu_{cgi}$ and a
+gene-specific dispersion parameter $\theta_g$.
 
-The parameter $\theta_g$ determines the model variance where smaller values
-indicate a wider distribution and higher values produce a tighter distribution
-that coincides with a Poisson distribution.
+$$log(\mu_{gci}) = log(D_c) + \beta_g + \beta_x X_{ci}$$
+
+The log expected count ($log(\mu_{cgi})$) is proportional to the perturbation
+effect ($\beta_x$) of a specific clone _i_ indicated by $X_{ci}$ (where
+$X_{ci} == 1$ if cell belongs to the perturbed clone or $X_{ci} == 0$
+otherwise) and offseted by the log cell total UMI count
+($D_c = \sum_g Y_{cg}$).
+
+The parameter $\theta_g$ defines the model dispersion where smaller values
+produce a wider distribution and higher values produce a tighter distribution
+that coincides with a _Poisson_ distribution. Such as the model variance is
+defined as follow:
 
 $$Var(Y_{cg}) = E[(Y_{cg} - \mu_{cgi})^2] = \mu_{cgi} + \mu_{cgi}^2/\theta_g$$
-
 $$\lim_{\theta\to\infty} NB(\mu, \theta) = Pois(\mu)$$
 
-Our model is similar to previously published tools such as`edgeR`
-(_Robinson et al. 2010_; _McCarthy et al. 2012_), `DESeq`
-(_Anders and Huber, 2010_; _Love et al. 2014_), and glmGamPoi
-(_Ahlmann-Eltze & Huber 2020_).
-But it differs in two points: (i) we adopted a regularized strategy to estimate
-$\theta_g$ to make it more robust to sampling noise such as described by
-_Hafemeister & Satija (2019)_; and (ii)
-
-- TODO: complete section
+This modeling approach is similar to previously published models such as edgeR
+[@robinson_edger_2010; @mccarthy_differential_2012 ], DESeq2
+[@anders_differential_2010; @love_moderated_2014], and glmGamPoi
+[@ahlmann-eltze_glmgampoi_2021].
+But it differs in two points: (i) to estimate $\theta_g$ we adopted a
+regularized estimation strategy to make it robust to sampling noise in low
+expression genes; and (ii) instead of fitting the model to all genes, it fits
+and measure specific perturbation to gene.
 
 ## Estimating dispersion
 
-Here we apply the strategy used by _Hafemeister & Satija (2019)_ to estimate
-$\theta_g$. First, we sample ~ 2000 genes and make a naive estimate of their
-expression using a Poisson regression modeled as $Y_{cg} \sim Poi(mu_{cg})$
-such as $log(mu_{cg}) = \beta_g + \beta_d D_c$. Next, we estimate a naive
-dispersion parameter using a maximum likelihood estimator, fit a kernel smooth
-regression to regularize the parameter as a function of average gene count
-($\sum_g Y_{cg} / N$), and using this regression to produce the final $\theta_g$
-for all other genes.
+Here we apply the strategy described by @hafemeister_normalization_2019 to
+estimate $\theta_g$.
+This strategy consists in first selecting at least 2000 genes and estimate of
+the expected count ($mu_{cg}$) using a Poisson regression offseted by the log
+cell total count (modeled as $Y_{cg} \sim Poi(mu_{cg})$, such as
+$log(mu_{cg}) = \beta_g + D_c$).
+Using $mu_{cg}$ and a maximum likelihood estimator to make a naive estimate of
+$\theta_g$.
+Next, we regularize our naive estimate by fitting a kernel smooth regression as
+function of the gene average count ($\sum_g Y_{cg} / N$) to produce
+our final $\theta_g$ estimate for all other genes.
 
 ```{r}
 raw_theta <- attr(res, "raw_theta")
@@ -354,7 +359,7 @@ plot(log10(mu), raw_theta,
   xlab = "Average expression (mu)",
   ylab = expression(theta), ylim = c(0, 150))
 abline(h = 100)
-lines(log10(res$mu[order(res$mu)]), res$theta[order(res$mu)], col = 2, lwd = 2)
+lines(log10(res$mu[order(res$mu)]), res$theta[order(res$mu)], col = 2, lwd = 3)
 axis(1, at = log10(mu_breaks), labels = mu_breaks)
 legend(
   "topleft", c("Naive Estimate", "Regularized Estimate", "Real"),
@@ -371,6 +376,16 @@ conditions
 
 Thus we can measure our false discovery rate, given our current cutoff
 (`qvalue < 0.10`), by producing the following confusion matrix.
+
+
+- [@hafemeister_normalization_2019]
+- [@svensson_droplet_2020]
+- [@townes_feature_2019]
+- [@anders_differential_2010]
+- [@love_moderated_2014]
+- [@ahlmann-eltze_glmgampoi_2021]
+- [-@mccarthy_differential_2012]
+- [@robinson_edger_2010]
 
 ```{r quick_start_confusion_matrix}
 # round(prop.table(
