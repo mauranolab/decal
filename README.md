@@ -8,6 +8,16 @@ Similar to other expression analysis tools, it models gene expression using
 a _Negative Binomial_ (or _Gamma-Poisson_) regression, modeling each gene
 UMI count by the cell total count and the cell alteration status.
 
+## Features
+
+- `decal` is compatible with **tidyverse** analysis.
+- Includes a suit of simulation functions to generate your own dataset based
+  `decal` model and evaluate your statistical power.
+- Package has few dependencies, requiring only `MASS`, `fastglm` and `Matrix`.
+- Can evaluate specific clonal alteration and gene effect, instead of
+  modeling all genes and all alterations. This allow us to quickly investigate
+  a large number of interactions skipping unlikely effects.
+
 ## Instalation
 
 To install `decal` package current version, open your R terminal and type:
@@ -68,16 +78,6 @@ Finally, it updates `perturbations` table to include the following columns:
 - `z`: estimated perturbation z-score.
 - `lfc`: _log2 fold-change_ of perturbed cells gene expression.
 - `pvalue` and `p_adjusted`: perturbation _t-test_ significance values.
-
-## Features
-
-- `decal` is compatible with **tidyverse** analysis.
-- Includes a suit of simulation functions to generate your own dataset based
-  `decal` model and evaluate your statistical power.
-- Package has few dependencies, requiring only `MASS`, `fastglm` and `Matrix`.
-- Can evaluate specific clonal alteration and gene effect, instead of
-  modeling all genes and all alterations. This allow us to quickly investigate
-  a large number of interactions skipping unlikely effects.
 
 ## Acknowledgement
 
