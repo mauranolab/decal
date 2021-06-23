@@ -83,11 +83,11 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   perturbations <- cbind(perturbations, data.frame(
     n0 = ncol(count) - n1[colidx], n1 = n1[colidx],
     x0 = x0[mtxidx], x1 = x1[mtxidx], mu = mu[rowidx],
-    raw_theta = attr(theta, "raw")[rowidx], theta = theta[rowidx],
+    theta = theta[rowidx],
     xb = NA_real_, z = NA_real_, lfc = NA_real_,
     pvalue = NA_real_, p_adjusted = NA_real_
   ))
-  attr(perturbations, "raw_theta") <- attr(theta, "raw")[rowidx]
+  attr(perturbations, "raw_theta") <- attr(theta, "raw")
   ## Fit analysis
   which_test <- which(
     (perturbations$x1 >= min_x | perturbations$x0 >= min_x) &
