@@ -198,22 +198,20 @@ Illustrated below is the `lfc` distribution as estimated by `decal` for each
 real perturbation value applied (`expected_lfc`).
 
 ```{r quick_start_hist}
-estimated <- split(res$lfc, res$expected_lfc)
-
-hist_breaks <- c(-Inf, seq(-4, 4, length.out = 50), Inf)
-hist_counts <- lapply(estimated, hist, breaks = hist_breaks, plot = FALSE)
-hist_ymax <- max(sapply(hist_counts, function(x) x$count / sum(x$count)))
-
-plot(c(-4, 4), c(0, hist_ymax), type = "n",
-  xlab = "Estimated LFC", ylab = "Proportion of interactions")
-for(i in seq_along(hist_counts)) {
-  lines(
-    hist_counts[[i]]$mids, hist_counts[[i]]$count / sum(hist_counts[[i]]$count),
-    col = i, type = "s"
-  )
+lfc_histogram <- function(lfc, fn = function(x) { x$count / sum(x$count) }) {
+  hist_breaks <- c(-Inf, seq(-4, 4, length.out = 50), Inf)
+  hist_counts <- lapply(lfc, hist, breaks = hist_breaks, plot = FALSE)
+  hist_ymax <- max(sapply(hist_counts, fn))
+  plot(c(-4, 4), c(0, hist_ymax), type = "n",
+    xlab = "Estimated LFC", ylab = "Proportion of interactions")
+  for(i in seq_along(hist_counts)) {
+    lines(hist_counts[[i]]$mids, fn(hist_counts[[i]]), col = i, type = "s")
+  }
+  legend("topleft", title = "Real LFC", legend = names(hist_counts),
+    col = seq_along(hist_counts), bty = "n", lty = 1, lwd = 2, ncol = 2)
 }
-legend("topleft", title = "Real LFC", legend = names(hist_counts),
-  col = seq_along(hist_counts), bty="n", lty=1, lwd=2, ncol=2)
+
+lfc_histogram(split(res$lfc, res$expected_lfc))
 ```
 
 We can also measure the estimate _Mean Squared Error_ (_MSE_) and _Rooted MSE_
@@ -386,108 +384,114 @@ This statistical model implies some assumptions and caveats:
   in a cell culture.
 
 # Simulating
-xx
 
-Many factor can affect our model **power** and **sensitivity**, thus we also
-include tools to simulate and measure your experiments power under your
-conditions
+Since many factor can affect your experiment, we included to `decal` a way to
+simulate a dataset under our model assumptions.
+These tools will allow you to evaluate your tests **power** and **sensitivity**
+under the different conditions you may find yourself.
 
-Thus we can measure our false discovery rate, given our current cutoff
-(`qvalue < 0.10`), by producing the following confusion matrix.
+`decal` simulation suite is compose of various functions to generate a count
+matrix (`sim_count` and `sim_count_from_data`), randomly assign cells to
+different clones (`sim_clone` and `sim_clone_range`), and generate a full
+experiment dataset (`sim_experiment` and `sim_experiment_from_data`).
+Here we will use `sim_experiment` and `sim_experiment_from_data` to generate
+our examples, but the other functions behave similarly.
 
+## Evaluating our model under null hypothesis
 
-- [@hafemeister_normalization_2019]
-- [@svensson_droplet_2020]
-- [@townes_feature_2019]
-- [@anders_differential_2010]
-- [@love_moderated_2014]
-- [@ahlmann-eltze_glmgampoi_2021]
-- [-@mccarthy_differential_2012]
-- [@robinson_edger_2010]
+Under the null hypothesis, we expect that our perturbations produce no
+expression change to nearby genes.
+Admitting a significance level of 5% and that `decal` statistical model holds,
+we would expect that the resulting z-score present a normal distribution
+centered at 0, p-value have a uniform distribution and about 5% of the tests
+below our significance threshold.
 
-```{r quick_start_confusion_matrix}
-# round(prop.table(
-#   table(real = res$estimated_lfc != 0, estimated = res$p_adjusted < 0.05)), 2)
-```
+Given an existing dataset, we can evaluate if our model holds by randomly
+recombining clone and gene pairs.
 
-To power your analysis, I've included some functions that facilitate and allow
-you to perform a randomization experiment to estimate the test `z-score` under
-no effect and estimate test power under our model assumptions.
-
-## Null hypothesis estimation
-
-```{r sim_randomization, fig.height=3, fig.width=9}
-rnd_perturbations <- data.frame(
-  clone = sample(names(clone), 1000, replace = TRUE),
-  gene = sample(rownames(count), 1000, replace = TRUE)
-)
-rnd_res <- decal(rnd_perturbations, count, clone)
+```{r sim_randomization, fig.height=2.5, fig.width=8}
+rnd <- unique(data.frame(
+  clone = sample(perturbations$clone),
+  gene = sample(perturbations$gene)
+))
+## remove previous clone + gene pairs
+rnd <- rnd[!paste(rnd$gene, rnd$clone) %in% paste(perturbations$gene, perturbations$clone),]
+rnd_res <- decal(rnd, count, clone)
 rnd_res <- subset(rnd_res, !is.na(rnd_res$pvalue))
 
-par(mfrow = c(1, 4))
+par(mfrow = c(1, 3))
 hist(rnd_res$z, xlab = "Z-score", main = "")
 hist(rnd_res$pvalue, xlab = "Observed Pvalue", main = "")
-plot(-log10(ppoints(rnd_res$pvalue)), -log10(sort(rnd_res$pvalue)),
-  xlab = "Expected -log10(P)",
-  ylab = "Observed -log10(P)")
-abline(0, 1, col = "red")
+hist(rnd_res$p_adjusted, xlab = "Observed Qvalue", main = "")
+
+mean(rnd_res$pvalue < 0.05)
+mean(rnd_res$p_adjusted < 0.05)
+```
+
+As expected, this experiment z-score presented the expected _z-score_ and
+_p-value_ distribution and the ratio of tests with p-value below the
+significance threshold (`r mean(rnd_res$pvalue < 0.05)`) within the expected
+5% at random.
+
+We can conduct a similar experiment producing a random count matrix based
+on your experiment counts. `sim_count_from_data` will simulate a UMI count
+matrix with the same dimensions as your experiment with cells total UMI count
+and gene average expression similar to your reference count matrix.
+
+```{r, fig.height=2.5, fig.width=8}
+rnd_count <- sim_count_from_data(count)
+
+rnd_res <- decal(perturbations, rnd_count, clone)
+rnd_res <- subset(rnd_res, !is.na(rnd_res$pvalue))
+
+par(mfrow = c(1, 3))
+hist(rnd_res$z, xlab = "Z-score", main = "")
+hist(rnd_res$pvalue, xlab = "Observed Pvalue", main = "")
 hist(rnd_res$p_adjusted, xlab = "Observed Qvalue", main = "")
 ```
 
-## Power analysis
+## Estimating your experiment power
 
-```{r sim_power, fig.height=4, fig.width=8}
-## for each clone perturb 10 genes with -2, -1, 1, and 2 log2 FC and add 100
-## interactions with no effect.
-lfc <- c(-2, -1, 1, 2)
-pwr_lfc <- c(rep(lfc, each = 10), rep(0, 100))
-pwr_dat <- sim_experiment_from_data(count, pwr_lfc, nclones = 20, min_n = 5, max_n = 20)
-dimnames(pwr_dat$count) <- NULL
+Another usufull application of `decal` simulation suite is conducting a power
+analysis to decide how much should you sequence or to define your tests filters.
+In the example below, we generated an experiment using
+`sim_experiment_from_data` which generates a random count matrix, a clone
+assignment list, and a perturbation table.
+The generated count matrix is based on your experiment matrix with the same
+dimensions, similar cells total count and gene average expression.
+The clone list is composed of 100 clones with 5 to 20 cells each.
+Perturbation table indicates pairs of clone and genes and the log2 fold-change
+applied, where for each clone a gene was randomly to apply a effect indicated
+by `lfc`. In this case, for each clone, 180 genes were selected and listed in
+`pwr_dat$perturbations` and among them 20 were perturbed by a log2 fold-change
+of -2, -1, 1, and 2.
+
+```{r power, fig.height=3, fig.width=8}
+pwr_lfc <- c(rep(c(-2, -1, 1, 2), each = 20), rep(0, 100))
+pwr_dat <- sim_experiment_from_data(
+  count, lfc = pwr_lfc, nclones = 100, min_n = 5, max_n = 20
+)
 pwr_res <- decal(pwr_dat$perturbations, pwr_dat$count, pwr_dat$clone)
 pwr_res <- subset(pwr_res, !is.na(pvalue))
-
-## Confusion matrix
-prop.table(table(
-  actual = pwr_res$expected_lfc != 0,
-  estimated = pwr_res$p_adjusted < 0.10
-  ),2)
-
-## Histogram of estimated LFC for different effects
-breaks <- c(-Inf, seq(-3.5, 3.5, length.out = 30) ,Inf)
-histograms <- lapply(
-  split(
-    pwr_res$lfc[pwr_res$expected_lfc %in% lfc],
-    pwr_res$expected_lfc[pwr_res$expected_lfc %in% lfc]
-  ), hist, breaks = breaks, plot = FALSE
-)
-ymax <- max(sapply(histograms, function(x) x$count / sum(x$count))) * 1.05
-## Estimate power by LFC
-pwr <- sapply(split(
-  pwr_res$p_adjusted[pwr_res$expected_lfc %in% lfc] < 0.05,
-  pwr_res$expected_lfc[pwr_res$expected_lfc %in% lfc]
-  ), mean)
-
-par(mfrow = c(1, 2))
-plot(c(-3.5, 3.5), c(0, ymax), type = "n", xlab = "Estimated LFC", ylab = "Frequency")
-for(i in seq_along(histograms)) {
-  lines(histograms[[i]]$mids, histograms[[i]]$count / sum(histograms[[i]]$count), col = i, type = "s")
-}
-legend(
-  "topleft", title = "Actual LFC", legend = sprintf("%+d", lfc),
-  col = seq_along(lfc), bty = "n", lty = 1, cex = .7
-)
-## Barplot of power estimate
-barplot(pwr, xlab = "LFC", ylab = "Power")
 ```
 
-- [@hafemeister_normalization_2019]
-- [@svensson_droplet_2020]
-- [@townes_feature_2019]
-- [@anders_differential_2010]
-- [@love_moderated_2014]
-- [@ahlmann-eltze_glmgampoi_2021]
-- [-@mccarthy_differential_2012]
-- [@robinson_edger_2010]
+Adminitting a 5% FDR, we can estimated the ratio of the truly perturbated
+gene and clone pairs were detected by `decal` (left plot) and the clone
+size frequency (right plot).
+For all log2 fold-change applied here, `decal` obtained a power close to 80%
+that indicate que performance of the model.
+
+```{r}
+par(mfrow = c(1, 2))
+barplot(
+  sapply(split(
+    pwr_res$p_adjusted[pwr_res$expected_lfc != 0] < 0.05,
+    pwr_res$expected_lfc[pwr_res$expected_lfc != 0]
+  ), mean),
+  xlab = "LFC", ylab = "Power")
+abline(h = 0.8, lty = 2, col = "firebrick")
+hist(sapply(pwr_dat$clone, length), main = "", xlab = "Number of perturbed cells")
+```
 
 # Session info
 
