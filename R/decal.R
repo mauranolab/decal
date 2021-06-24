@@ -120,11 +120,11 @@ build_clone_matrix <- function(clone, cells) {
   validate_index(cells)
   ## Vectorize clone list
   clones <- or(names(clone), seq_along(clone))
-  vec_cells <- unlist(clone)
-  vec_clone <- rep(clones, sapply(clone, length))
+  vec_cells <- get_index(unlist(clone), cells)
+  vec_clone <- get_index(rep(clones, sapply(clone, length)), clones)
   ## Build matrix
   mtx <- sparseMatrix(
-    i = match(vec_cells, cells), j = match(vec_clone, clones), x = 1L,
+    i = vec_cells, j = vec_clone, x = 1L,
     dims = c(length(cells), length(clones))
   )
   if (is.character(cells)) rownames(mtx) <- cells

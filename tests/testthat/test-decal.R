@@ -52,6 +52,17 @@ test_that("decal recognize named indexes", {
   check_decal(dat, decal(dat$pert, dat$count, dat$clone))
 })
 
+test_that("decal accepts integer index with named matrix", {
+  dat <- build_dat()
+
+  cname <- sprintf("cell-%03d", seq_len(ncol(dat$count)))
+  rname <- sprintf("gene-%03d", seq_len(nrow(dat$count)))
+  gname <- sprintf("clone-%03d", seq_along(dat$cclone))
+  dimnames(dat$count) <- list(rname, cname)
+
+  check_decal(dat, decal(dat$pert, dat$count, dat$clone))
+})
+
 test_that("decal validates perturbation format", {
   count <- matrix(rpois(100 * 100, 10), ncol = 100)
   clone <- split(seq_len(100), sample(1:5, 100, replace = TRUE))
