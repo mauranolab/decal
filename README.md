@@ -1,4 +1,4 @@
-# DECAL
+# DECAL <img src="hex.png" align="right" width="150px"/>
 
 **DECAL** (**D**ifferential **E**xpression analysis of **C**lonal
 **A**lterations **L**ocal effects) provide you tools to conduct differential
