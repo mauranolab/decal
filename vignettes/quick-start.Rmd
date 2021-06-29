@@ -48,7 +48,7 @@ UMI count by the cell total count and the cell alteration status.
   modeling all genes and all alterations. This allow us to quickly investigate
   a large number of interactions skipping unlikely effects.
 
-## Instalation
+## Installation
 
 To install `decal` package current version, open your R terminal and type:
 
