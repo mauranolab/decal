@@ -18,7 +18,7 @@ UMI count by the cell total count and the cell alteration status.
   modeling all genes and all alterations. This allow us to quickly investigate
   a large number of interactions skipping unlikely effects.
 
-## Instalation
+## Installation
 
 To install `decal` package current version, open your R terminal and type:
 
@@ -28,46 +28,30 @@ To install `decal` package current version, open your R terminal and type:
 remotes::install_github("mauranolab/decal")
 ```
 
-## Quick Start
+## Using `decal`
 
-`decal` is the package main function which estimates each gene dispersion
-($\theta$) parameter and fit a _Negative Binomial_ regression to each gene
-and alteration pair specified to evaluate the perturbation statistical
-significance.
-It requires three parameters a UMI count matrix, a list specifying your clones
-cell (count matrix columns) composition, and a table indicating the potential
-alteration and affected gene to evaluate.
+The package main function (`decal`) runs the whole statistical analysis by
+fitting a _Negative Binomial_ (or _Gamma-Poisson_) regression to each gene
+and alteration pair specified and evaluate the perturbation statistical
+significance for a single-cell perturbation experiment. You can run `decal`
+as follow:
 
-Below we show a quick example of `decal` analysis using a simulated dataset
-included with our package.
-
-```{r quick_start}
-library(decal)
-
-data("sim_decal")
-perturbations <- sim_decal$perturbations
-count <- sim_decal$count
-clone <- sim_decal$clone
+```{r}
+decal(perturbations, count, clone)
 ```
 
-Our dataset (`sim_decal`) is composed by the three required parameters:
+The three parameters required are the following:
 
-- a UMI count matrix (`count`);
-- a list dividing our cells by clonal population (`clone`);
-- and a table (`perturbations`) indicating potential interactions to evaluate,
-  specified by the perturbed `clone` and candidate `gene`.
+- a table specifying the population and gene to evaluate perturbation
+  (`perturbations`).
+- a UMI count matrix that each column correspond to a cell and each row
+  a gene or feature (`count`).
+- a list of cells specifying your clones composition (`clone`). This is
+  represented by a R list composed by character (or integer) vectors named
+  after the clone ID and indicating the cells belonging to this clone.
 
-With these inputs, we can run the full analysis using the `decal` function as
-follow:
-
-```{r quick_start_run}
-res <- decal(perturbations, count, clone)
-```
-
-`decal` function conducts the whole differential analysis, by estimating each
-gene dispersion and fitting a negative binomial regression to evaluate each
-interaction statistical significance.
-Finally, it updates `perturbations` table to include the following columns:
+`decal` returns a deep copy of the `perturbations` table with the following
+additional columns:
 
 - `n0` and `n1`: number of non-perturbed and perturbed cells, respectively.
 - `x0` and `x1`: average UMI count among perturbed and non-perturbed cells,
@@ -78,6 +62,26 @@ Finally, it updates `perturbations` table to include the following columns:
 - `z`: estimated perturbation z-score.
 - `lfc`: _log2 fold-change_ of perturbed cells gene expression.
 - `pvalue` and `p_adjusted`: perturbation _t-test_ significance values.
+
+
+## Quick Start
+
+Below we include a example of `decal` analysis on a simulated dataset included
+with our package.
+
+```{r quick_start}
+library(decal)
+
+data("sim_decal")
+perturbations <- sim_decal$perturbations
+count <- sim_decal$count
+clone <- sim_decal$clone
+
+decal(perturbations, count, clone)
+```
+
+Further details exploring this example are included in our _quick-start_
+vignette.
 
 ## Acknowledgement
 
