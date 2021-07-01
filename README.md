@@ -1,3 +1,7 @@
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/mauranolab/decal/workflows/R-CMD-check/badge.svg)](https://github.com/mauranolab/decal/actions)
+<!-- badges: end -->
+
 # DECAL <img src="hex.png" align="right" width="150px"/>
 
 **DECAL** (**D**ifferential **E**xpression analysis of **C**lonal
