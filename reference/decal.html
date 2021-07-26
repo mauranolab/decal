@@ -9,6 +9,13 @@
 <title>DECAL: Differential Expression analysis of Clonal Alterations Local effects
 based on Negative Binomial distribution — decal • decal</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -44,6 +51,7 @@ based on Negative Binomial distribution — decal • decal</title>
 based on Negative Binomial distribution — decal" />
 <meta property="og:description" content="This function performs the clonal alterations differential expression
 analysis pairs of clonal sub-populations and perturbed genes." />
+<meta property="og:image" content="https://mauranolab.github.io/decal/logo.png" />
 
 
 
@@ -212,9 +220,9 @@ per clone, this function models gene expression (<code>Y</code>) with a negative
 binomial (a.k.a. Gamma-Poisson) distribution for each perturbation pair as
 a function of <code>X</code> (clone indicator variable) offset by the cell total count
 (<code>D</code>) as described by the model:</p>
-<p>$$Y ~ NB(xb, theta)$$
+<p>$$Y \sim NB(xb, theta)$$
 $$log(xb) = \beta_0 + \beta_x * X + log(D)$$
-$$theta ~ \mu$$</p>
+$$theta \sim \mu$$</p>
 <p>The gene dispersion parameter (<code>theta</code>) is estimated and regularized in two
 steps as developed by Hafemeister &amp; Satija (2019). First, for a subset of
 genes it fits a <em>Poisson</em> regression offseted by <code><a href='https://rdrr.io/r/base/Log.html'>log(D)</a></code> and estimate a
