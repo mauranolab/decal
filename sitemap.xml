@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://mauranolab.github.io/decal/index.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/reference/decal.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/reference/read_cellranger.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/reference/seq_log.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/reference/sim_decal.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/reference/simulate_clone.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/reference/simulate_count.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/reference/simulate_experiment.html</loc>
+  </url>
+  <url>
+    <loc>https://mauranolab.github.io/decal/articles/quick-start.html</loc>
+  </url>
+</urlset>
