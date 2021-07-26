@@ -10,9 +10,9 @@
 #' a function of `X` (clone indicator variable) offset by the cell total count
 #' (`D`) as described by the model:
 #'
-#' \deqn{Y ~ NB(xb, theta)}
+#' \deqn{Y \sim NB(xb, theta)}
 #' \deqn{log(xb) = \beta_0 + \beta_x * X + log(D)}
-#' \deqn{theta ~ \mu}
+#' \deqn{theta \sim \mu}
 #'
 #' The gene dispersion parameter (`theta`) is estimated and regularized in two
 #' steps as developed by Hafemeister & Satija (2019). First, for a subset of
