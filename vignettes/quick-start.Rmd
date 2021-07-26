@@ -3,7 +3,16 @@ title: "Analyzing single-cell RNA-seq perturbation with DECAL"
 author: "André M. Ribeiro-dos-Santos"
 date: "`r format(Sys.Date(), '%m/%d/%Y')`"
 abstract: >
-  TODO: Package abstract
+  Single-cell RNA sequencing technology has allow us to explore cell specific
+  expression patterns. Functional genomics have been exploring such dataset to
+  establish direct link between genetic alterations and differential gene
+  expression. The package DECAL (Differential Expression analysis of Clonal
+  Alterations Local effects) provides tools to explore single-cell of
+  perturbed cells populations. It uses a negative binomial generalized linear
+  model to evaluate gene expression changes between clonal cell populations and
+  gene candidates. The present vignette explains the package usage,
+  demonstrantes a typical analysis workflow, and explains the package
+  statistical model.
   decal package version: `r packageVersion("decal")`
 output:
   bookdown::html_document2:
@@ -518,7 +527,7 @@ size frequency (right plot).
 For all log2 fold-change applied here, `decal` obtained a power close to 80%
 that indicate que performance of the model.
 
-```{r}
+```{r power_plot, fig.height=3, fig.width=8}
 par(mfrow = c(1, 2))
 barplot(
   sapply(split(
@@ -538,4 +547,19 @@ hist(sapply(pwr_dat$clone, length), main = "", xlab = "Number of perturbed cells
 
 ```{r sessionInfo}
 sessionInfo()
+```
+
+```{css, echo=FALSE}
+p.abstract{
+  font-size: 24px;
+  font-family: inherit;
+  text-align: center;
+  font-weight: bold;
+}
+
+div.abstract{
+  margin: auto;
+  width: 90%;
+  padding-bottom: 15px;
+}
 ```
