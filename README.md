@@ -28,7 +28,7 @@ UMI count by the cell total count and the cell alteration status.
 
 To install `decal` package current version, open your R terminal and type:
 
-```{r installation, eval = FALSE}
+```{r}
 ## Install remotes if not available with
 ## install.install.packages("remotes")
 remotes::install_github("mauranolab/decal")
@@ -75,7 +75,7 @@ additional columns:
 Below we include a example of `decal` analysis on a simulated dataset included
 with our package.
 
-```{r quick_start}
+```{r}
 library(decal)
 
 data("sim_decal")
