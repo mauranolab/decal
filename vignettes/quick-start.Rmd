@@ -6,15 +6,16 @@ abstract: >
   TODO: Package abstract
   decal package version: `r packageVersion("decal")`
 output:
-  rmarkdown::html_document:
+  bookdown::html_document2:
     highlight: pygments
     toc: true
     df_print: kable
     fig_width: 6
     fig_caption: true
+  bookdown::pdf_document2: default
 bibliography: decal.bib
 vignette: >
-  %\VignetteIndexEntry{Analyzing single-cell RNA-seq perturbation with scCloneDE}
+  %\VignetteIndexEntry{Analyzing single-cell RNA-seq perturbation with DECAL}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
   %\usepackage[utf8]{inputenc}
@@ -31,12 +32,13 @@ options(scipen = 1, digits = 2)
 # Default Workflow
 
 **DECAL** (**D**ifferential **E**xpression analysis of **C**lonal
-**A**lterations **L**ocal effects) provide you tools to conduct differential
-expression analysis of single-cell perturbations to potential interacting
-genes.
-Similar to other expression analysis tools, it models gene expression using
-a _Negative Binomial_ (or _Gamma-Poisson_) regression, modeling each gene
-UMI count by the cell total count and the cell alteration status.
+**A**lterations **L**ocal effects) provide you with tools to conduct
+differential expression analysis of single-cell perturbations experiments
+to potentially interacting genes.
+Similar to other differential expression analysis tools, it models gene
+expression using a _Negative Binomial_ (or _Gamma-Poisson_) regression,
+modeling each gene UMI count by the cell alteration status and cell total
+count.
 
 ## Features
 
@@ -58,50 +60,30 @@ To install `decal` package current version, open your R terminal and type:
 remotes::install_github("mauranolab/decal")
 ```
 
-## Quick Start
+## Using `decal`
 
-`decal` is the package main function which estimates each gene dispersion
-($\theta$) parameter and fit a _Negative Binomial_ regression to each gene
-and alteration pair specified to evaluate the perturbation statistical
-significance.
-It requires three parameters a UMI count matrix, a list specifying your clones
-cell (count matrix columns) composition, and a table indicating the potential
-alteration and affected gene to evaluate.
+The package main function (`decal`) runs the whole statistical analysis by
+fitting a _Negative Binomial_ (or _Gamma-Poisson_) regression to each gene
+and alteration pair specified and evaluate the perturbation statistical
+significance for a single-cell perturbation experiment. You can run `decal`
+as follow:
 
-Below we show a quick example of `decal` analysis using a simulated dataset
-included with our package.
-
-```{r quick_start}
-library(decal)
-
-data("sim_decal")
-perturbations <- sim_decal$perturbations
-count <- sim_decal$count
-clone <- sim_decal$clone
-
-head(perturbations)
+```{r example, eval = FALSE}
+decal(perturbations, count, clone)
 ```
 
-Our dataset (`sim_decal`) is composed by the three required parameters:
+The three parameters required are the following:
 
-- a UMI count matrix (`count`);
-- a list dividing our cells by clonal population (`clone`);
-- and a table (`perturbations`) indicating potential interactions to evaluate,
-  specified by the perturbed `clone` and candidate `gene`.
+- a table specifying the population and gene to evaluate perturbation
+  (`perturbations`).
+- a UMI count matrix that each column correspond to a cell and each row
+  a gene or feature (`count`).
+- a list of cells specifying your clones composition (`clone`). This is
+  represented by a R list composed by character (or integer) vectors named
+  after the clone ID and indicating the cells belonging to this clone.
 
-With these inputs, we can run the full analysis using the `decal` function as
-follow:
-
-```{r quick_start_run}
-res <- decal(perturbations, count, clone)
-head(res)
-```
-
-`decal` function conducts the whole differential analysis, by estimating each
-gene dispersion and fitting a negative binomial regression to evaluate each
-interaction statistical significance.
-Finally, `decal` updates `perturbations` table to include the following
-results:
+`decal` returns a deep copy of the `perturbations` table with the following
+additional columns:
 
 - `n0` and `n1`: number of non-perturbed and perturbed cells, respectively.
 - `x0` and `x1`: average UMI count among perturbed and non-perturbed cells,
@@ -113,18 +95,35 @@ results:
 - `lfc`: _log2 fold-change_ of perturbed cells gene expression.
 - `pvalue` and `p_adjusted`: perturbation _t-test_ significance values.
 
+## Quick Start
+
+Below we include a example of `decal` analysis on a simulated dataset included
+with our package.
+
+```{r quick_start}
+library(decal)
+
+data("sim_decal")
+perturbations <- sim_decal$perturbations
+count <- sim_decal$count
+clone <- sim_decal$clone
+
+res <- decal(perturbations, count, clone)
+head(res)
+```
+
 ## Exploring decal results
 
-Let's explore `decal` results. Admitting a _false discovery rate_ (_FDR_) of
-5%, we can determinate significantly differentiate interactions by picking
-those with `p_adjusted < 0.05`.
+Now let's explore `decal` results. Admitting a 5% _false discovery rate_
+(_FDR_), we can select significantly differentiate perturbations by
+picking those with `p_adjusted < 0.05`.
 Below we present the top 5 interactions with highest reducing and increasing
-gene expression effect (as measured by `lfc`).
+log fold-change effect (as measured by `lfc`).
 
 ```{r quick_start_significant}
 sig <- subset(res, p_adjusted < 0.05)
 sig <- sig[order(sig$lfc), ]
-## select first 5 and last 5 as `sig` is ordered by lfc
+## select first 5 and last 5 since`sig` is ordered by lfc
 pick <- c(1:5, nrow(sig) - 1:5)
 sig[pick,]
 ```
@@ -132,12 +131,13 @@ sig[pick,]
 To visualize the perturbation effect, let's plot the top 3 interactions
 increasing and reducing gene expression.
 
-```{r quick_start_plot_it, fig.height = 4}
-## log-transform
-log10p <- function(x) log10(x + 1)
-## normalizing size factor to average cell depth
+```{r quick_start_plot, fig.height = 4}
+## compute a normalize size-factor
 sf <- mean(colSums(count)) / colSums(count)
-## select first and last 3 rows
+## add log10(x+1) transformation function
+log10p <- function(x) log10(x + 1)
+
+## pick tables first 3 and last 3
 pick <- c(1:3, nrow(sig) - 1:3)
 
 par(mfrow = c(2, 3))
@@ -167,35 +167,33 @@ for (i in pick) {
 }
 ```
 
-## Evaluating `decal` results
+## Evaluating decal results
 
-Since `sim_decal` is a simulated dataset with some real expression perturbation
-introduced, we can measure how well `decal` identifies real change.
-The real expression perturbation introduced in our simulated dataset is
-indicated by `expected_lfc` column in `perturbations` table, where a
-`expected_lfc == 0` indicate no gene was applied.
-Admitting a _FDR_ of 5%, we can measure our results with the confusion matrix
-below.
+In our `sim_decal` simulated dataset, we introduced some real expression
+perturbations as indicated by `expected_lfc` column in `perturbations` table,
+such as a 0 `expected_lfc` indicate no change was applied.
+We can evaluate our results using the confusion matrix below:
 
 ```{r quick_start_confusion}
-conf_mat <- table(
-  real = res$expected_lfc != 0,
-  estimated = res$p_adjusted < 0.05
-)
-round(prop.table(conf_mat, 1), 3)
+conf_mat <- table(real = res$expected_lfc != 0, decal = res$p_adjusted < 0.05)
+round(prop.table(conf_mat), 3)
 ```
 
-Based on this confusion matrix, our model presented:
+Based on this confusion matrix, our `decal` model presented:
 
 - **Accuracy**: `r round(sum(diag(conf_mat)) / sum(conf_mat), 3)`
-- **Precision**: `r round(conf_mat[2, 2] / sum(conf_mat[2,]), 3)`
-- **Recall**: `r round(conf_mat[2, 2] / sum(conf_mat[,2]), 3)`
+- **Precision**: `r round(prc <- conf_mat[2, 2] / sum(conf_mat[2,]), 3)`
+- **Recall**: `r round(rec <- conf_mat[2, 2] / sum(conf_mat[,2]), 3)`
+- **F1 Score**: `r round(2 * prc * rec / (prc + rec) , 3)`
 - **Observed FDR**: `r round((conf_mat[1, 2] + conf_mat[2, 1]) / sum(conf_mat), 3)`
 
-All of these are good metrics and within the expected results. Next, we can
-evaluated how well our model estimated the real _log-2 fold-change_ applied.
-Illustrated below is the `lfc` distribution as estimated by `decal` for each
-real perturbation value applied (`expected_lfc`).
+These results show great metrics with recall, accuracy, precision and F1 score
+above 95% and a _false discovery ratio_ within our admitted 5%.
+
+Next, let's explore how well `decal` estimated the real _log2 fold-change_ (LFC)
+applied. Illustrated below is the decal estimated LFC (`lfc` column in `res`)
+distribution for each of the real perturbations values applied (`expected_lfc`
+column).
 
 ```{r quick_start_hist}
 lfc_histogram <- function(lfc, fn = function(x) { x$count / sum(x$count) }) {
@@ -214,8 +212,10 @@ lfc_histogram <- function(lfc, fn = function(x) { x$count / sum(x$count) }) {
 lfc_histogram(split(res$lfc, res$expected_lfc))
 ```
 
-We can also measure the estimate _Mean Squared Error_ (_MSE_) and _Rooted MSE_
-(_RMSE_).
+Finally, we can measure decal LFC estimative _Mean Squared Error_ (_MSE_) and
+_Rooted MSE_ (_RMSE_) using the code below. The results indicate that
+`decal` estimates presented high accuracy and precision with _RMSE_ below 1 LFC
+for all perturbations effects applied.
 
 ```{r quick_start_rmse}
 err <- (res$lfc - res$expected_lfc)**2
@@ -224,63 +224,68 @@ mse <- sapply(err, mean, na.rm = TRUE)
 
 data.frame(
   N = sapply(err, length),
-  MSE = mse,
-  RMSE = sqrt(mse)
+  MSE = mse, RMSE = sqrt(mse)
 )
 ```
 
-Although _MSE_ and _RMSE_ increase for negative _LFC_, the model still presents
-a high accuracy and precision when estimating real perturbations effects.
+# Exploring `decal` arguments
 
-# Understanding arguments
+As mentioned before, `decal` function requires three main parameters:
 
-To run `decal` function, it requires three main parameters:
+1. `perturbation`, a table specifying the clone population and gene to
+  evaluate differential expression.
+2. `count`, a UMI count matrix where each column correspond to a cell and
+  each row a gene or feature.
+3. `clone`, a list of cells specifying each clone populations composition.
 
-1. `perturbations`, a table of potential interactions to be evaluated,
-identified by a `clone` and `gene` pair.
-2. `count`, a UMI count matrix.
-3. `clone`, a list of cells defining each clone compositions.
+In the next sections, we will further illustrate and give alternative formats
+for (1) and (3).
 
-## Electing potential gene perturbation
+## Electing potential gene perturbations
 
 Since `decal` was designed to explore specific gene perturbations, it requires
-you to specify clone and gene pairs to evaluate expression change among the
-cells within the clone.
-In our original study, we located our perturbations and evaluated their impact
-to all genes TSS within _250Kbp_ of the perturbation.
+you to specify clone and gene (or features) pairs to evaluate expression change
+among the cells within the clone in regards to all other cells.
+For example, in our original study after we localized our alternations and
+evaluated their impact to all genes within _250 kbp_.
 
-
-Since we aim to explore specific gene perturbations, we must specify pairs of
-clone population and genes (or features) to evaluate expression change among
-the clone cells in regards to all others.
-In our original study, we located our perturbations and evaluated expression
-change to all genes with TSS within _250Kbp_ of the perturbation.
-Here, we specify the these pairs of clone and perturbed genes to evaluate as
-a table with a `clone` and `gene` column indicating the clone/gene id
-(as character) or index (as integer), such as the example below:
+In `sim_decal$perturbations` data.frame (see snippet below) the clone and gene
+pairs are specified by the `clone` and `gene` columns, which can be an id
+(as character vector) or index (as integer vector). In the case these elements
+are specified as an index, they identify the ith element of `sim_decal$clone`
+and row position in `sim_decal$count`, respectively.
 
 ```{r var_interactions}
-head(perturbations)
+head(sim_decal$perturbations)
+```
+
+By default `decal` uses the `clone` and `gene` columns, but you can specify
+a different column using `gene_col` and `clone_col` parameters like in the
+example below.
+
+```{r}
+alt_pert <- data.frame(gene_ix = 101:110, clone_ix = 1:10)
+decal(alt_pert, count, clone,
+  gene_col = "gene_ix", clone_col = "clone_ix")
 ```
 
 ## Defining your experiment clonal structure
 
-`decal` allow you to explore multiple cell groups and explore specific gene
-expression change caused to this group of cells. In our experiment, we used
-an adjacent dataset to define your experiment clonal populations. This clonal
-structure is specified in `clone` as a list of vectors specifying the set of
-cells that define each clone. Either as a character vector of cells id
-(specify to `count` column names) or a integer vector (specifying `count`
-column indexes), such as the example below:
+After identifying your cells' clonal populations you can specify it `decal`
+(`clone` parameter) as a R list where each element is clone represented by a
+collection of ids (as character vector) or index (as integer vector)
+indicating the set of cells belonging to the clone. When the cells are
+specified by index, they correspond to the column position in your `count`
+matrix. See below a example from `sim_decal$clone`
 
 ```{r var_clone}
-clone[1:2]
+sim_decal$clone[1:2]
 ```
 
 ## Reducing noise and increasing power
 
 To improve your findings, `decal` includes some filtering arguments to avoid
-testing interactions with low statistical power. Filters include:
+testing interactions with low statistical power:
 
 - `min_x`: minimal average UMI count on perturbed and unperturbed cells
   (indicated by `x1` and `x0` on resulting table, respectively).
@@ -291,30 +296,37 @@ testing interactions with low statistical power. Filters include:
 Interactions that doesn't met all of these requirements are skipped and no
 differential expression analysis is conducted, eventhough they are no removed
 from the results.
-By default, `min_x = 1`; `min_n = 2`; and `min_mu = 0.05`.
+By default, `decal` applies the following minimal filters `min_x = 1`;
+`min_n = 2`; and `min_mu = 0.05`.
 
 # Understanding `decal` model
 
 ## Statistical model
 
-The `decal` statistical model is based on the observations from
-@svensson_droplet_2020 and @townes_feature_2019 that UMI counts of a particular
-gene approximates a _Poisson_ or _Negative Binomial_ distribution in a
-single-cell RNA-seq experiment.
+The `decal` statistical model is based on the observations that UMI counts
+of a particular gene approximates a _Poisson_ or _Negative Binomial_
+distribution in a single-cell RNA-seq experiment [@svensson_droplet_2020;
+@townes_feature_2019].
 Thus, we proposed to model the observed counts as follow:
 
-$$Y_{gc} \sim NB(\mu_{gci}, \theta_g)$$
+$$
+Y_{gc} \sim NB(\mu_{gci}, \theta_g)
+(\#eq:model)
+$$
 
 where $Y_{cg}$ is the UMI count for gene _g_ and cell _c_ modeled using a
 _negative binomial_ distribution with expected count $\mu_{cgi}$ and a
 gene-specific dispersion parameter $\theta_g$.
 
-$$log(\mu_{gci}) = log(D_c) + \beta_g + \beta_x X_{ci}$$
+$$
+log(\mu_{gci}) = log(D_c) + \beta_g + \beta_x X_{ci}
+(\#eq:modelMu)
+$$
 
-The log expected count ($log(\mu_{cgi})$) is proportional to the perturbation
-effect ($\beta_x$) of a specific clone _i_ indicated by $X_{ci}$ (where
-$X_{ci} == 1$ if cell belongs to the perturbed clone or $X_{ci} == 0$
-otherwise) and offseted by the log cell total UMI count
+The $log(\mu_{cgi})$ (or log expected count) is proportional to the
+perturbation effect ($\beta_x$) of a specific clone _i_ indicated by $X_{ci}$
+(where $X_{ci} == 1$ if cell _c_ belongs to the perturbed clone or
+$X_{ci} == 0$ otherwise) and offseted by the log cell total UMI count
 ($D_c = \sum_g Y_{cg}$).
 
 The parameter $\theta_g$ defines the model dispersion where smaller values
@@ -322,11 +334,17 @@ produce a wider distribution and higher values produce a tighter distribution
 that coincides with a _Poisson_ distribution. Such as the model variance is
 defined as follow:
 
-$$Var(Y_{cg}) = E[(Y_{cg} - \mu_{cgi})^2] = \mu_{cgi} + \mu_{cgi}^2/\theta_g$$
-$$\lim_{\theta\to\infty} NB(\mu, \theta) = Pois(\mu)$$
+$$
+\begin{aligned}
+Var(Y_{cg}) & = E[(Y_{cg} - \mu_{cgi})^2] \\
+ & = \mu_{cgi} + \mu_{cgi}^2/\theta_g \\
+\lim_{\theta\to\infty} NB(\mu, \theta) & = Pois(\mu)
+\end{aligned}
+(\#eq:variance)
+$$
 
 This modeling approach is similar to previously published models such as edgeR
-[@robinson_edger_2010; @mccarthy_differential_2012 ], DESeq2
+[@robinson_edger_2010; @mccarthy_differential_2012], DESeq2
 [@anders_differential_2010; @love_moderated_2014], and glmGamPoi
 [@ahlmann-eltze_glmgampoi_2021].
 But it differs in two points: (i) to estimate $\theta_g$ we adopted a
@@ -336,17 +354,28 @@ and measure specific perturbation to gene.
 
 ## Estimating dispersion
 
-Here we apply the strategy described by @hafemeister_normalization_2019 to
-estimate $\theta_g$.
-This strategy consists in first selecting at least 2000 genes and estimate of
-the expected count ($mu_{cg}$) using a Poisson regression offseted by the log
-cell total count (modeled as $Y_{cg} \sim Poi(mu_{cg})$, such as
-$log(mu_{cg}) = \beta_g + D_c$).
-Using $mu_{cg}$ and a maximum likelihood estimator to make a naive estimate of
-$\theta_g$.
-Next, we regularize our naive estimate by fitting a kernel smooth regression as
-function of the gene average count ($\sum_g Y_{cg} / N$) to produce
-our final $\theta_g$ estimate for all other genes.
+To estimate and regularize our $\theta_g$, we adopted the strategy described
+by @hafemeister_normalization_2019.
+This strategy consists in first selecting about 2000 genes, estimating their
+expect count ($mu_{cg}$) using a naive Poisson regression offseted by the log
+cell total count, such as:
+
+$$
+\begin{aligned}
+Y_{cg} & \sim Pois(mu_{cg}) \\
+log(mu_{cg}) & = \beta_g + log(D_c)
+\end{aligned}
+(#eq:naiveTheta)
+$$
+
+Next, we use $mu_{cg}$ to make a naive estimate of $\theta_g$ using a maximum
+likelihood estimator (`MASS::theta_ml` function).
+The resulting naive estimate was finally regularized by fitting it to a kernel
+smooth regression as a function of the average gene count ($\sum_g Y_{cg} / N$)
+to produce our final estimate of $\theta_g$.
+Illustrate below is a scatterplot of each naive estimate, in red our final
+regularized estimate and in black the real dispersion applied when simulating
+`sim_decal` dataset.
 
 ```{r}
 raw_theta <- attr(res, "raw_theta")
@@ -354,7 +383,7 @@ mu <- rowMeans(count)
 mu_breaks <- c(0.01, 0.1, 1, 2, 5, 10, 20, 50, 100)
 
 plot(log10(mu), raw_theta,
-  xlab = "Average expression (mu)",
+  xlab = "Average expression (mu)", xaxt = "n",
   ylab = expression(theta), ylim = c(0, 150))
 abline(h = 100)
 lines(log10(res$mu[order(res$mu)]), res$theta[order(res$mu)], col = 2, lwd = 3)
@@ -365,30 +394,35 @@ legend(
 )
 ```
 
+As shown above, our regularized estimates approximates the real dispersion
+values and control some of the excessive fluctuation presented by our naive
+estimate.
+
 ## Assumptions and Caveats
 
-This statistical model implies some assumptions and caveats:
+It is worth notice that `decal` statiscal model implies some assumptions and
+caveats:
 
 1. The UMI count distribution is independent between genes, which is usually
   true for single-cell experiments due to large quantity of genes and small
   proportion of counts each of them represent.
-2. The effect of individual clones are not enough to disrupt the unperturbed
-  cells expression estimates. For such assumption, the number of perturbated
-  cells of any clone must be much smaller than the total number of cells
-  available (`n1 << n0`). This allow us to explore each clone independently
-  since it makes unlikely a gene unperturbed estimate is affected by other
-  clones, since they don't represent enough cells to disrupt the overall gene
-  expression.
-3. The cells represent a uniform population differing only by the induced
-  perturbations. This can easily be obtained when the experiment is conducted
-  in a cell culture.
+2. The effect of individual clones are not enough to affect the unperturbed
+  estimates for other clones.
+  For such assumption to hold, the number of perturbated cells of any clone
+  must be much smaller than the total number of cells available (`n1 << N`).
+  This allow us to explore each clone independently, since it makes the effect
+  of other clones to our unperturbed estimates negletable.
+3. The cells investigates must represent an uniform population differing only
+  by the induced alterations.
+  This can safely be assumed when the experiment is conducted in a uniform
+  cell culture.
 
 # Simulating
 
 Since many factor can affect your experiment, we included to `decal` a way to
-simulate a dataset under our model assumptions.
-These tools will allow you to evaluate your tests **power** and **sensitivity**
-under the different conditions you may find yourself.
+simulate a dataset under our model assumptions (see equation \@ref(eq:model)).
+These tools will allow you to estimate your experiment **power** and
+**sensitivity** under different conditions you may find.
 
 `decal` simulation suite is compose of various functions to generate a count
 matrix (`sim_count` and `sim_count_from_data`), randomly assign cells to
@@ -401,8 +435,8 @@ our examples, but the other functions behave similarly.
 
 Under the null hypothesis, we expect that our perturbations produce no
 expression change to nearby genes.
-Admitting a significance level of 5% and that `decal` statistical model holds,
-we would expect that the resulting z-score present a normal distribution
+Admitting a _FDR_ of 5% and that `decal` statistical model holds, we would
+expect that the resulting z-score present a normal distribution
 centered at 0, p-value have a uniform distribution and about 5% of the tests
 below our significance threshold.
 
@@ -493,12 +527,12 @@ abline(h = 0.8, lty = 2, col = "firebrick")
 hist(sapply(pwr_dat$clone, length), main = "", xlab = "Number of perturbed cells")
 ```
 
+# References
+
+<div id="refs"></div>
+
 # Session info
 
 ```{r sessionInfo}
 sessionInfo()
 ```
-
-# References
-
-<div id="refs"></div>
