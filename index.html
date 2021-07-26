@@ -102,7 +102,9 @@
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>To install <code>decal</code> package current version, open your R terminal and type:</p>
-<p><code>{r installation, eval = FALSE} ## Install remotes if not available with ## install.install.packages("remotes") remotes::install_github("mauranolab/decal")</code></p>
+<pre class="{r}"><code><a href="https://remotes.r-lib.org/reference/install_github.html">## Install remotes if not available with
+## install.install.packages("remotes")
+remotes::install_github("mauranolab/decal")</a></code></pre>
 </div>
 <div id="using-decal" class="section level2">
 <h2 class="hasAnchor">
@@ -140,9 +142,14 @@
 <h2 class="hasAnchor">
 <a href="#quick-start" class="anchor"></a>Quick Start</h2>
 <p>Below we include a example of <code>decal</code> analysis on a simulated dataset included with our package.</p>
-<p>```{r quick_start} library(decal)</p>
-<p>data(“sim_decal”) perturbations &lt;- sim_decal<span class="math inline"><em>p</em><em>e</em><em>r</em><em>t</em><em>u</em><em>r</em><em>b</em><em>a</em><em>t</em><em>i</em><em>o</em><em>n</em><em>s</em><em>c</em><em>o</em><em>u</em><em>n</em><em>t</em> &lt;  − <em>s</em><em>i</em><em>m</em><sub><em>d</em></sub><em>e</em><em>c</em><em>a</em><em>l</em></span>count clone &lt;- sim_decal$clone</p>
-<p>decal(perturbations, count, clone) ```</p>
+<pre class="{r}"><code><a href="https://mauranolab.github.io/decal">library(decal)
+
+data("sim_decal")
+perturbations &lt;- sim_decal$perturbations
+count &lt;- sim_decal$count
+clone &lt;- sim_decal$clone
+
+decal(perturbations, count, clone)</a></code></pre>
 <p>Further details exploring this example are included in our <em>quick-start</em> vignette.</p>
 </div>
 <div id="acknowledgement" class="section level2">
