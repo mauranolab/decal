@@ -12,7 +12,10 @@ output:
     df_print: kable
     fig_width: 6
     fig_caption: true
+    number_sections: false
   bookdown::pdf_document2: default
+pkgdown:
+  as_is: true
 bibliography: decal.bib
 vignette: >
   %\VignetteIndexEntry{Analyzing single-cell RNA-seq perturbation with DECAL}
@@ -365,7 +368,7 @@ $$
 Y_{cg} & \sim Pois(mu_{cg}) \\
 log(mu_{cg}) & = \beta_g + log(D_c)
 \end{aligned}
-(#eq:naiveTheta)
+(\#eq:naiveTheta)
 $$
 
 Next, we use $mu_{cg}$ to make a naive estimate of $\theta_g$ using a maximum
