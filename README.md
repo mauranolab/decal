@@ -4,7 +4,7 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-# DECAL <img src="hex.png" align="right" width="150px"/>
+# DECAL <img src="man/figures/logo.png" align="right" width="150px"/>
 
 **DECAL** (**D**ifferential **E**xpression analysis of **C**lonal
 **A**lterations **L**ocal effects) provide you tools to conduct differential
