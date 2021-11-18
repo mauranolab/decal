@@ -142,7 +142,7 @@ estimate_dispersion <- function(count, n = 2000, min_mu = 0.05) {
   validate_numeric_scalar(min_mu)
 
   mu <- rowMeans(count)
-  cp <- colSums(count)
+  dp <- colSums(count)
   estimate_theta(count, mu, log(dp), n = n, genes = which(mu >= min_mu))
 }
 
