@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">decal</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -102,16 +102,16 @@
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>To install <code>decal</code> package current version, open your R terminal and type:</p>
-<pre class="{r}"><code><a href="https://remotes.r-lib.org/reference/install_github.html">## Install remotes if not available with
+<pre class="{r}"><code>## Install remotes if not available with
 ## install.install.packages("remotes")
-remotes::install_github("mauranolab/decal")</a></code></pre>
+remotes::install_github("mauranolab/decal")</code></pre>
 </div>
 <div id="using-decal" class="section level2">
 <h2 class="hasAnchor">
 <a href="#using-decal" class="anchor"></a>Using <code>decal</code>
 </h2>
 <p>The package main function (<code>decal</code>) runs the whole statistical analysis by fitting a <em>Negative Binomial</em> (or <em>Gamma-Poisson</em>) regression to each gene and alteration pair specified and evaluate the perturbation statistical significance for a single-cell perturbation experiment. You can run <code>decal</code> as follow:</p>
-<pre class="{r}"><code><a href="reference/decal.html">decal(perturbations, count, clone)</a></code></pre>
+<pre class="{r}"><code>decal(perturbations, count, clone)</code></pre>
 <p>The three parameters required are the following:</p>
 <ul>
 <li>a table specifying the population and gene to evaluate perturbation (<code>perturbations</code>).</li>

@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">decal</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -76,7 +76,7 @@
 
       
 
-      </header><script src="quick-start_files/jquery-1.11.3/jquery.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1">
+      </header><script src="quick-start_files/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="quick-start_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <script src="quick-start_files/bootstrap-3.3.5/js/bootstrap.min.js"></script><script src="quick-start_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script><script src="quick-start_files/bootstrap-3.3.5/shim/respond.min.js"></script><style>h1 {font-size: 34px;}
        h1.title {font-size: 38px;}
@@ -93,7 +93,7 @@
       <h1 data-toc-skip>Analyzing single-cell RNA-seq perturbation with DECAL</h1>
                         <h4 class="author">André M. Ribeiro-dos-Santos</h4>
             
-            <h4 class="date">07/26/2021</h4>
+            <h4 class="date">11/18/2021</h4>
       
       
       <div class="hidden name"><code>quick-start.Rmd</code></div>
@@ -103,7 +103,7 @@
     
         <div class="abstract">
       <p class="abstract">Abstract</p>
-      <p>Single-cell RNA sequencing technology has allow us to explore cell specific expression patterns. Functional genomics have been exploring such dataset to establish direct link between genetic alterations and differential gene expression. The package DECAL (Differential Expression analysis of Clonal Alterations Local effects) provides tools to explore single-cell of perturbed cells populations. It uses a negative binomial generalized linear model to evaluate gene expression changes between clonal cell populations and gene candidates. The present vignette explains the package usage, demonstrantes a typical analysis workflow, and explains the package statistical model. decal package version: 0.1.0</p>
+      <p>Single-cell RNA sequencing technology has allow us to explore cell specific expression patterns. Functional genomics have been exploring such dataset to establish direct link between genetic alterations and differential gene expression. The package DECAL (Differential Expression analysis of Clonal Alterations Local effects) provides tools to explore single-cell of perturbed cells populations. It uses a negative binomial generalized linear model to evaluate gene expression changes between clonal cell populations and gene candidates. The present vignette explains the package usage, demonstrantes a typical analysis workflow, and explains the package statistical model. decal package version: 0.1.1</p>
     </div>
     
 <div id="default-workflow" class="section level1">
@@ -227,11 +227,11 @@ with our package.</p>
 <td align="right">60.0</td>
 <td align="right">57.4</td>
 <td align="right">78</td>
-<td align="right">60.0</td>
-<td align="right">1.16</td>
-<td align="right">0.06</td>
-<td align="right">0.25</td>
-<td align="right">0.38</td>
+<td align="right">60.2</td>
+<td align="right">1.30</td>
+<td align="right">0.07</td>
+<td align="right">0.20</td>
+<td align="right">0.31</td>
 </tr>
 <tr class="even">
 <td align="left">clone-001</td>
@@ -243,7 +243,7 @@ with our package.</p>
 <td align="right">38.0</td>
 <td align="right">37.3</td>
 <td align="right">73</td>
-<td align="right">38.5</td>
+<td align="right">38.4</td>
 <td align="right">0.63</td>
 <td align="right">0.04</td>
 <td align="right">0.53</td>
@@ -262,8 +262,8 @@ with our package.</p>
 <td align="right">22.2</td>
 <td align="right">0.46</td>
 <td align="right">0.04</td>
-<td align="right">0.64</td>
-<td align="right">0.78</td>
+<td align="right">0.65</td>
+<td align="right">0.77</td>
 </tr>
 <tr class="even">
 <td align="left">clone-001</td>
@@ -276,9 +276,9 @@ with our package.</p>
 <td align="right">4.3</td>
 <td align="right">46</td>
 <td align="right">4.3</td>
-<td align="right">-0.04</td>
-<td align="right">-0.01</td>
-<td align="right">0.96</td>
+<td align="right">-0.03</td>
+<td align="right">0.00</td>
+<td align="right">0.98</td>
 <td align="right">0.98</td>
 </tr>
 <tr class="odd">
@@ -291,11 +291,11 @@ with our package.</p>
 <td align="right">22.8</td>
 <td align="right">23.9</td>
 <td align="right">75</td>
-<td align="right">22.7</td>
-<td align="right">-0.96</td>
+<td align="right">22.8</td>
+<td align="right">-0.87</td>
 <td align="right">-0.07</td>
-<td align="right">0.34</td>
-<td align="right">0.49</td>
+<td align="right">0.38</td>
+<td align="right">0.54</td>
 </tr>
 <tr class="even">
 <td align="left">clone-001</td>
@@ -307,11 +307,11 @@ with our package.</p>
 <td align="right">19.7</td>
 <td align="right">19.4</td>
 <td align="right">77</td>
-<td align="right">19.7</td>
-<td align="right">0.27</td>
-<td align="right">0.02</td>
-<td align="right">0.79</td>
-<td align="right">0.87</td>
+<td align="right">19.8</td>
+<td align="right">0.37</td>
+<td align="right">0.03</td>
+<td align="right">0.71</td>
+<td align="right">0.82</td>
 </tr>
 </tbody>
 </table>
@@ -363,7 +363,7 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">1.4</td>
 <td align="right">18</td>
 <td align="right">0.03</td>
-<td align="right">-3.8</td>
+<td align="right">-3.7</td>
 <td align="right">-5.4</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -397,7 +397,7 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">1.9</td>
 <td align="right">22</td>
 <td align="right">0.13</td>
-<td align="right">-5.8</td>
+<td align="right">-5.7</td>
 <td align="right">-3.9</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -414,7 +414,7 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">19.7</td>
 <td align="right">77</td>
 <td align="right">1.41</td>
-<td align="right">-6.3</td>
+<td align="right">-5.7</td>
 <td align="right">-3.8</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -431,7 +431,7 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">10.0</td>
 <td align="right">68</td>
 <td align="right">0.82</td>
-<td align="right">-8.7</td>
+<td align="right">-8.0</td>
 <td align="right">-3.6</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -447,8 +447,8 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">264.40</td>
 <td align="right">38.5</td>
 <td align="right">73</td>
-<td align="right">314.13</td>
-<td align="right">20.0</td>
+<td align="right">313.85</td>
+<td align="right">22.9</td>
 <td align="right">3.1</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -464,30 +464,13 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">194.24</td>
 <td align="right">27.6</td>
 <td align="right">73</td>
-<td align="right">199.43</td>
-<td align="right">57.6</td>
-<td align="right">3.1</td>
+<td align="right">199.02</td>
+<td align="right">69.8</td>
+<td align="right">3.0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
 </tr>
 <tr class="even">
-<td align="left">120</td>
-<td align="left">clone-003</td>
-<td align="left">gene699</td>
-<td align="right">3</td>
-<td align="right">981</td>
-<td align="right">19</td>
-<td align="right">7.5</td>
-<td align="right">69.47</td>
-<td align="right">8.7</td>
-<td align="right">67</td>
-<td align="right">62.67</td>
-<td align="right">40.3</td>
-<td align="right">3.1</td>
-<td align="right">0.00</td>
-<td align="right">0.00</td>
-</tr>
-<tr class="odd">
 <td align="left">604</td>
 <td align="left">clone-014</td>
 <td align="left">gene636</td>
@@ -498,8 +481,25 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">52.62</td>
 <td align="right">6.8</td>
 <td align="right">61</td>
-<td align="right">52.83</td>
-<td align="right">23.9</td>
+<td align="right">52.89</td>
+<td align="right">30.2</td>
+<td align="right">3.0</td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr class="odd">
+<td align="left">120</td>
+<td align="left">clone-003</td>
+<td align="left">gene699</td>
+<td align="right">3</td>
+<td align="right">981</td>
+<td align="right">19</td>
+<td align="right">7.5</td>
+<td align="right">69.47</td>
+<td align="right">8.7</td>
+<td align="right">67</td>
+<td align="right">62.17</td>
+<td align="right">51.5</td>
 <td align="right">3.0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -515,8 +515,8 @@ log fold-change effect (as measured by <code>lfc</code>).</p>
 <td align="right">10.50</td>
 <td align="right">1.6</td>
 <td align="right">19</td>
-<td align="right">12.07</td>
-<td align="right">19.7</td>
+<td align="right">12.08</td>
+<td align="right">20.6</td>
 <td align="right">3.0</td>
 <td align="right">0.00</td>
 <td align="right">0.00</td>
@@ -538,7 +538,7 @@ increasing and reducing gene expression.</p>
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="va">pick</span><span class="op">)</span> <span class="op">{</span>
   <span class="co">## Determinate perturbed and unperturbed cells</span>
-  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">count</span><span class="op">)</span> <span class="op">%in%</span> <span class="va">clone</span><span class="op">[[</span><span class="va">sig</span><span class="op">$</span><span class="va">clone</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span><span class="op">]</span>
+  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">count</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="va">clone</span><span class="op">[[</span><span class="va">sig</span><span class="op">$</span><span class="va">clone</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span><span class="op">]</span>
   <span class="co">## Calculate normalized expression count</span>
   <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">count</span><span class="op">[</span><span class="va">sig</span><span class="op">$</span><span class="va">gene</span><span class="op">[</span><span class="va">i</span><span class="op">]</span>,<span class="op">]</span> <span class="op">*</span> <span class="va">sf</span>
   <span class="co">## plot jitter</span>
@@ -649,7 +649,7 @@ for all perturbations effects applied.</p>
 <td align="left">-1</td>
 <td align="right">75</td>
 <td align="right">0.08</td>
-<td align="right">0.28</td>
+<td align="right">0.27</td>
 </tr>
 <tr class="even">
 <td align="left">0</td>
@@ -790,9 +790,9 @@ example below.</p>
 <td align="right">17</td>
 <td align="right">1.06</td>
 <td align="right">-0.78</td>
-<td align="right">-0.24</td>
-<td align="right">0.44</td>
-<td align="right">0.88</td>
+<td align="right">-0.25</td>
+<td align="right">0.43</td>
+<td align="right">0.87</td>
 </tr>
 <tr class="even">
 <td align="left">clone-002</td>
@@ -820,10 +820,10 @@ example below.</p>
 <td align="right">1.42</td>
 <td align="right">1.2</td>
 <td align="right">17</td>
-<td align="right">1.22</td>
-<td align="right">-0.06</td>
-<td align="right">-0.02</td>
-<td align="right">0.95</td>
+<td align="right">1.23</td>
+<td align="right">-0.04</td>
+<td align="right">-0.01</td>
+<td align="right">0.97</td>
 <td align="right">0.98</td>
 </tr>
 <tr class="even">
@@ -840,7 +840,7 @@ example below.</p>
 <td align="right">-0.81</td>
 <td align="right">-0.25</td>
 <td align="right">0.42</td>
-<td align="right">0.88</td>
+<td align="right">0.87</td>
 </tr>
 <tr class="odd">
 <td align="left">clone-005</td>
@@ -852,11 +852,11 @@ example below.</p>
 <td align="right">1.58</td>
 <td align="right">1.2</td>
 <td align="right">17</td>
-<td align="right">1.58</td>
-<td align="right">1.50</td>
+<td align="right">1.57</td>
+<td align="right">1.49</td>
 <td align="right">0.37</td>
-<td align="right">0.13</td>
-<td align="right">0.65</td>
+<td align="right">0.14</td>
+<td align="right">0.66</td>
 </tr>
 <tr class="even">
 <td align="left">clone-006</td>
@@ -885,10 +885,10 @@ example below.</p>
 <td align="right">1.3</td>
 <td align="right">18</td>
 <td align="right">0.81</td>
-<td align="right">-1.30</td>
-<td align="right">-0.67</td>
+<td align="right">-1.29</td>
+<td align="right">-0.68</td>
 <td align="right">0.20</td>
-<td align="right">0.65</td>
+<td align="right">0.66</td>
 </tr>
 <tr class="even">
 <td align="left">clone-008</td>
@@ -900,11 +900,11 @@ example below.</p>
 <td align="right">1.79</td>
 <td align="right">1.3</td>
 <td align="right">17</td>
-<td align="right">1.63</td>
-<td align="right">1.83</td>
+<td align="right">1.64</td>
+<td align="right">1.87</td>
 <td align="right">0.39</td>
-<td align="right">0.07</td>
-<td align="right">0.65</td>
+<td align="right">0.06</td>
+<td align="right">0.62</td>
 </tr>
 <tr class="odd">
 <td align="left">clone-009</td>
@@ -917,7 +917,7 @@ example below.</p>
 <td align="right">1.3</td>
 <td align="right">18</td>
 <td align="right">1.34</td>
-<td align="right">0.03</td>
+<td align="right">0.02</td>
 <td align="right">0.01</td>
 <td align="right">0.98</td>
 <td align="right">0.98</td>
@@ -933,9 +933,9 @@ example below.</p>
 <td align="right">1.3</td>
 <td align="right">18</td>
 <td align="right">1.26</td>
-<td align="right">-0.21</td>
-<td align="right">-0.05</td>
-<td align="right">0.83</td>
+<td align="right">-0.22</td>
+<td align="right">-0.06</td>
+<td align="right">0.82</td>
 <td align="right">0.98</td>
 </tr>
 </tbody>
@@ -1126,7 +1126,7 @@ recombining clone and gene pairs.</p>
   gene <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="va">perturbations</span><span class="op">$</span><span class="va">gene</span><span class="op">)</span>
 <span class="op">)</span><span class="op">)</span>
 <span class="co">## remove previous clone + gene pairs</span>
-<span class="va">rnd</span> <span class="op">&lt;-</span> <span class="va">rnd</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">rnd</span><span class="op">$</span><span class="va">gene</span>, <span class="va">rnd</span><span class="op">$</span><span class="va">clone</span><span class="op">)</span> <span class="op">%in%</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">perturbations</span><span class="op">$</span><span class="va">gene</span>, <span class="va">perturbations</span><span class="op">$</span><span class="va">clone</span><span class="op">)</span>,<span class="op">]</span>
+<span class="va">rnd</span> <span class="op">&lt;-</span> <span class="va">rnd</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">rnd</span><span class="op">$</span><span class="va">gene</span>, <span class="va">rnd</span><span class="op">$</span><span class="va">clone</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">perturbations</span><span class="op">$</span><span class="va">gene</span>, <span class="va">perturbations</span><span class="op">$</span><span class="va">clone</span><span class="op">)</span>,<span class="op">]</span>
 <span class="va">rnd_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/decal.html">decal</a></span><span class="op">(</span><span class="va">rnd</span>, <span class="va">count</span>, <span class="va">clone</span><span class="op">)</span>
 <span class="va">rnd_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">rnd_res</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">rnd_res</span><span class="op">$</span><span class="va">pvalue</span><span class="op">)</span><span class="op">)</span>
 
@@ -1138,12 +1138,12 @@ recombining clone and gene pairs.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R">
 <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">rnd_res</span><span class="op">$</span><span class="va">pvalue</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.044</span>
+<span class="co">#&gt; [1] 0.048</span>
 <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">rnd_res</span><span class="op">$</span><span class="va">p_adjusted</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0</span></code></pre></div>
 <p>As expected, this experiment z-score presented the expected <em>z-score</em> and
 <em>p-value</em> distribution and the ratio of tests with p-value below the
-significance threshold (0.04) within the expected
+significance threshold (0.05) within the expected
 5% at random.</p>
 <p>We can conduct a similar experiment producing a random count matrix based
 on your experiment counts. <code>sim_count_from_data</code> will simulate a UMI count
@@ -1237,12 +1237,12 @@ that indicate que performance of the model.</p>
 <a href="#session-info" class="anchor"></a>Session info</h1>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html">sessionInfo</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; R version 4.1.0 (2021-05-18)</span>
+<span class="co">#&gt; R version 4.1.2 (2021-11-01)</span>
 <span class="co">#&gt; Platform: x86_64-apple-darwin17.0 (64-bit)</span>
 <span class="co">#&gt; Running under: macOS Catalina 10.15.7</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Matrix products: default</span>
-<span class="co">#&gt; BLAS:   /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRblas.dylib</span>
+<span class="co">#&gt; BLAS:   /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRblas.0.dylib</span>
 <span class="co">#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRlapack.dylib</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; locale:</span>
@@ -1252,15 +1252,15 @@ that indicate que performance of the model.</p>
 <span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; other attached packages:</span>
-<span class="co">#&gt; [1] decal_0.1.0</span>
+<span class="co">#&gt; [1] decal_0.1.1</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; loaded via a namespace (and not attached):</span>
-<span class="co">#&gt;  [1] Rcpp_1.0.7        bookdown_0.22     lattice_0.20-44   digest_0.6.27    </span>
-<span class="co">#&gt;  [5] MASS_7.3-54       grid_4.1.0        magrittr_2.0.1    evaluate_0.14    </span>
-<span class="co">#&gt;  [9] highr_0.9         rlang_0.4.11      stringi_1.7.3     Matrix_1.3-3     </span>
-<span class="co">#&gt; [13] rmarkdown_2.9     tools_4.1.0       stringr_1.4.0     xfun_0.24        </span>
-<span class="co">#&gt; [17] yaml_2.2.1        compiler_4.1.0    fastglm_0.0.1     htmltools_0.5.1.1</span>
-<span class="co">#&gt; [21] knitr_1.33</span></code></pre></div>
+<span class="co">#&gt;  [1] Rcpp_1.0.7      bookdown_0.24   lattice_0.20-45 digest_0.6.28  </span>
+<span class="co">#&gt;  [5] MASS_7.3-54     grid_4.1.2      magrittr_2.0.1  evaluate_0.14  </span>
+<span class="co">#&gt;  [9] highr_0.9       rlang_0.4.12    stringi_1.7.5   jquerylib_0.1.4</span>
+<span class="co">#&gt; [13] Matrix_1.3-4    rmarkdown_2.11  tools_4.1.2     stringr_1.4.0  </span>
+<span class="co">#&gt; [17] xfun_0.28       yaml_2.2.1      fastmap_1.1.0   compiler_4.1.2 </span>
+<span class="co">#&gt; [21] fastglm_0.0.1   htmltools_0.5.2 knitr_1.36</span></code></pre></div>
 <style type="text/css">
 p.abstract{
   font-size: 24px;

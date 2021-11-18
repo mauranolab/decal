@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Simulate a DECAL perturbation experiment — simulate_experiment • decal</title>
+<title>Estimate dispersion — estimate_dispersion • decal</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,10 +46,10 @@
 
 
 
-<meta property="og:title" content="Simulate a DECAL perturbation experiment — simulate_experiment" />
-<meta property="og:description" content="It simulates a random DECAL experiment generating a random UMI count matrix
-with cells randomly assigned to different clones and introducing to each
-clone perturbations to random genes." />
+<meta property="og:title" content="Estimate dispersion — estimate_dispersion" />
+<meta property="og:description" content="It estimates and regularizes the genes (or features) dispersion parameter
+of decal negative binomial model using the strategy developed by
+Hafemeister &amp;amp; Satija (2019)." />
 <meta property="og:image" content="https://mauranolab.github.io/decal/logo.png" />
 
 
@@ -125,90 +125,47 @@ clone perturbations to random genes." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Simulate a DECAL perturbation experiment</h1>
+    <h1>Estimate dispersion</h1>
     
-    <div class="hidden name"><code>simulate_experiment.Rd</code></div>
+    <div class="hidden name"><code>estimate_dispersion.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>It simulates a random DECAL experiment generating a random UMI count matrix
-with cells randomly assigned to different clones and introducing to each
-clone perturbations to random genes.</p>
+    <p>It estimates and regularizes the genes (or features) dispersion parameter
+of <code>decal</code> negative binomial model using the strategy developed by
+Hafemeister &amp; Satija (2019).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>sim_experiment</span><span class='op'>(</span>
-  <span class='va'>depth</span>,
-  <span class='va'>ratio</span>,
-  lfc <span class='op'>=</span> <span class='fl'>0</span>,
-  nclones <span class='op'>=</span> <span class='fl'>10L</span>,
-  min_n <span class='op'>=</span> <span class='fl'>2L</span>,
-  max_n <span class='op'>=</span> <span class='fl'>20L</span>,
-  theta <span class='op'>=</span> <span class='fl'>100L</span>
-<span class='op'>)</span>
-
-<span class='fu'>sim_experiment_from_data</span><span class='op'>(</span>
-  <span class='va'>reference</span>,
-  lfc <span class='op'>=</span> <span class='fl'>0</span>,
-  nclones <span class='op'>=</span> <span class='fl'>10L</span>,
-  min_n <span class='op'>=</span> <span class='fl'>2L</span>,
-  max_n <span class='op'>=</span> <span class='fl'>20L</span>,
-  theta <span class='op'>=</span> <span class='fl'>100L</span>,
-  ngenes <span class='op'>=</span> <span class='cn'>NULL</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>estimate_dispersion</span><span class='op'>(</span><span class='va'>count</span>, n <span class='op'>=</span> <span class='fl'>2000</span>, min_mu <span class='op'>=</span> <span class='fl'>0.05</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>depth</th>
-      <td><p>cells total UMI count</p></td>
+      <th>count</th>
+      <td><p>UMI count matrix with cells as columns and genes (or features)
+as rows.</p></td>
     </tr>
     <tr>
-      <th>ratio</th>
-      <td><p>ratio of genes UMI over total UMI count</p></td>
+      <th>n</th>
+      <td><p>number of genes sampled to preliminary estimation.</p></td>
     </tr>
     <tr>
-      <th>lfc</th>
-      <td><p>vector indicating the perturbations to be generated for each clone</p></td>
-    </tr>
-    <tr>
-      <th>nclones</th>
-      <td><p>number of clones to be simulated</p></td>
-    </tr>
-    <tr>
-      <th>min_n</th>
-      <td><p>minimum clone size</p></td>
-    </tr>
-    <tr>
-      <th>max_n</th>
-      <td><p>maximum clone size</p></td>
-    </tr>
-    <tr>
-      <th>theta</th>
-      <td><p>negative binomial dispersion parameter</p></td>
-    </tr>
-    <tr>
-      <th>reference</th>
-      <td><p>UMI count matrix used as base for the simulation</p></td>
-    </tr>
-    <tr>
-      <th>ngenes</th>
-      <td><p>number of genes to be simulated. When <code>NULL</code> it replicates
-the gene ratio found in <code>reference</code>, otherwise it simulates <code>ngenes</code>
-with ratio ranging in a logarithm scale from lowest to highest observed
-ratio observed.</p></td>
+      <th>min_mu</th>
+      <td><p>minimal overall average expression (<code>mu</code>) required.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a list containing the following fields:</p><ul>
-<li><p><code>perturbations</code>, a table indicating the perturbations <code>expected_lfc</code> for
-a <code>gene</code> in a <code>clone</code>.</p></li>
-<li><p><code>clone</code>, a list of cells assigned to each clone.</p></li>
-<li><p><code>count</code>, a random UMI count matrix.</p></li>
-</ul>
+    <p>a numeric vector of the estimated dispersion for each row of <code>count</code></p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
+    <p>First, for a subset of genes it fits a <em>Poisson</em> regression offseted by
+<code>log(depth)</code> and estimate a crude <code>theta</code> using a maximum likelihood
+estimator with the observed counts and regression results. Next, it
+regularize and expands <code>theta</code> estimates with a kernel smoothing function
+as a function of average count (<code>mu</code>).</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

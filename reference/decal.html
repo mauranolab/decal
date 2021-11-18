@@ -83,7 +83,7 @@ analysis pairs of clonal sub-populations and perturbed genes." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">decal</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -141,6 +141,7 @@ analysis pairs of clonal sub-populations and perturbed genes.</p>
   <span class='va'>perturbations</span>,
   <span class='va'>count</span>,
   <span class='va'>clone</span>,
+  theta <span class='op'>=</span> <span class='cn'>NULL</span>,
   theta_sample <span class='op'>=</span> <span class='fl'>2000</span>,
   min_mu <span class='op'>=</span> <span class='fl'>0.05</span>,
   min_n <span class='op'>=</span> <span class='fl'>3</span>,
@@ -166,6 +167,10 @@ as rows.</p></td>
     <tr>
       <th>clone</th>
       <td><p>list of cells per clone.</p></td>
+    </tr>
+    <tr>
+      <th>theta</th>
+      <td><p>gene (or features) dispersion</p></td>
     </tr>
     <tr>
       <th>theta_sample</th>
@@ -225,7 +230,7 @@ $$log(xb) = \beta_0 + \beta_x * X + log(D)$$
 $$theta \sim \mu$$</p>
 <p>The gene dispersion parameter (<code>theta</code>) is estimated and regularized in two
 steps as developed by Hafemeister &amp; Satija (2019). First, for a subset of
-genes it fits a <em>Poisson</em> regression offseted by <code><a href='https://rdrr.io/r/base/Log.html'>log(D)</a></code> and estimate a
+genes it fits a <em>Poisson</em> regression offseted by <code>log(D)</code> and estimate a
 crude <code>theta</code> using a maximum likelihood estimator with the observed counts
 and regression results. Next, it regularize and expands <code>theta</code> estimates
 with a kernel smoothing function as a function of average count (<code>mu</code>).</p>
