@@ -107,6 +107,36 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   return(perturbations)
 }
 
+#' Estimate dispersion
+#'
+#' It estimates and regularizes the genes (or features) dispersion parameter
+#' of `decal` negative binomial model using the strategy developed by
+#' Hafemeister & Satija (2019).
+#'
+#' First, for a subset of genes it fits a _Poisson_ regression offseted by
+#' `log(depth)` and estimate a crude `theta` using a maximum likelihood
+#' estimator with the observed counts and regression results. Next, it
+#' regularize and expands `theta` estimates with a kernel smoothing function
+#' as a function of average count (`mu`).
+#'
+#' @param count UMI count matrix with cells as columns and genes (or features)
+#' as rows.
+#' @param n number of genes sampled to preliminary estimation.
+#' @param min_mu minimal overall average expression (`mu`) required.
+#' @return a numeric vector of the estimated dispersion for each row of `count`
+#'
+#' @importFrom Matrix colSums rowMeans
+#' @export
+estimate_dispersion <- function(count, n = 2000, min_mu = 0.05) {
+  validate_matrix(count)
+  validate_positive_integer_scalar(n)
+  validate_numeric_scalar(min_mu)
+
+  mu <- rowMeans(count)
+  cp <- colSums(count)
+  estimate_theta(count, mu, log(dp), n = n, genes = which(mu >= min_mu))
+}
+
 #' @importFrom Matrix sparseMatrix
 #' @noRd
 build_clone_matrix <- function(clone, cells) {
