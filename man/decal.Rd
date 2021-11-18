@@ -9,6 +9,7 @@ decal(
   perturbations,
   count,
   clone,
+  theta = NULL,
   theta_sample = 2000,
   min_mu = 0.05,
   min_n = 3,
@@ -26,6 +27,8 @@ differential expression effect.}
 as rows.}
 
 \item{clone}{list of cells per clone.}
+
+\item{theta}{gene (or features) dispersion}
 
 \item{theta_sample}{number of genes sampled to preliminary \code{theta} estimation.}
 
