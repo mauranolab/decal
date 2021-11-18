@@ -157,7 +157,7 @@ regularize_theta <- function(logmu1, theta1, logmu) {
     x = logmu1, y = odds1, x.points = xpnts,
     bandwidth = bw.SJ(logmu1) * 3, kernel = "normal"
   )$y
-  return(10**xpnts / (10**odds - 1))
+  return(10**logmu / (10**odds - 1))
 }
 
 #' @importFrom stats approx density
@@ -178,7 +178,7 @@ estimate_theta <- function(count, mu, log_dp, n = 2000, genes) {
     genes1 <- genes
     logmu1 <- logmu
   }
-  theta1 <- estimate_theta_raw(count, genes, log_dp)
+  theta1 <- estimate_theta_raw(count, genes1, log_dp)
   ## Step2. Regularize theta estimate
   ## TODO: remove outliers?
   raw <- numeric(nrow(count))
@@ -205,11 +205,12 @@ fit_nb <- function(count, clone, theta, log_dp, rows, cols, p_method) {
   jx <- sort(unique(cols))
   X <- as.matrix(clone[, jx, drop = FALSE])
   Y <- as.matrix(count[ix, , drop = FALSE])
+  Th <- theta[ix]
   mean_depth <- mean(exp(log_dp))
   ## fit regression
   result <- mapply(function(i, j) {
     f <- fastglm(cbind(1, X[, j]), Y[i, ],
-      family = negative.binomial(theta = theta[i]), method = 2,
+      family = negative.binomial(theta = Th[i]), method = 2,
       offset = log_dp
     )
     coef <- summary(f)$coef[2, ]
