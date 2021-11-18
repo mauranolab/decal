@@ -26,6 +26,7 @@
 #' @param count UMI count matrix with cells as columns and genes (or features)
 #' as rows.
 #' @param clone list of cells per clone.
+#' @param theta gene (or features) dispersion
 #' @param theta_sample number of genes sampled to preliminary `theta` estimation.
 #' @param min_mu minimal overall average expression (`mu`) required.
 #' @param min_n minimal number of perturbed cells (`n1`) required.
@@ -48,7 +49,7 @@
 #'
 #' @importFrom Matrix colSums rowSums rowMeans
 #' @export
-decal <- function(perturbations, count, clone, theta_sample = 2000,
+decal <- function(perturbations, count, clone, theta = NULL, theta_sample = 2000,
                   min_mu = 0.05, min_n = 3, min_x = 1,
                   gene_col = "gene", clone_col = "clone", p_method = "BH") {
   ## Validate input
@@ -65,10 +66,18 @@ decal <- function(perturbations, count, clone, theta_sample = 2000,
   x0 <- coldiv(rowSums(count) - xp, ncol(count) - n1)
   mu <- rowMeans(count)
   log_depth <- log(colSums(count))
-  theta <- estimate_theta(count, mu, log_depth,
-    n = theta_sample,
-    genes = which(mu >= min_mu)
-  )
+  if (is.null(theta)) {
+    theta <- estimate_theta(count, mu, log_depth,
+                            n = theta_sample,
+                            genes = which(mu >= min_mu)
+    )
+  } else {
+    validate_numeric(theta)
+    if (length(theta) != 1L && length(theta) != nrow(count)) {
+      stop("`theta` must be a numeric vector or scalar", call. = FALSE)
+    }
+    if (length(theta) == 1L) { theta <- rep(theta, nrow(count)) }
+  }
   ## Extract indexes
   rowidx <- get_index(perturbations[[gene_col]], rownames(count))
   colidx <- get_index(perturbations[[clone_col]], names(clone))
